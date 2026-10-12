@@ -7,7 +7,7 @@
 use std::sync::atomic::Ordering;
 
 use iced::widget::canvas::{self, Frame};
-use iced::widget::{button, column, container};
+use iced::widget::{button, column, container, row};
 use iced::{Color, Element, Point as UiPoint, Size, Task};
 use pointcloud_core::IndexedPoint;
 use serde_json::{json, Value};
@@ -15,7 +15,7 @@ use serde_json::{json, Value};
 use crate::i18n::{key, tr};
 use crate::selection::Projection;
 use crate::ui_style;
-use crate::{opencad_properties, opencad_ribbon, Message, PointViewport, Studio, ToolIcon};
+use crate::{opencad_properties, Message, PointViewport, Studio, ToolIcon};
 
 /// Pixel reach of a measuring click, the same as the point-pick tool.
 pub const PICK_RADIUS: f32 = 8.0;
@@ -472,37 +472,38 @@ impl MeasureTool {
             .map_or(Value::Null, Measurement::value)
     }
 
-    /// Distance, Area and Clear for the ribbon's measure group.
-    pub fn ribbon(&self) -> Element<'static, Message> {
-        let mode_button = |mode: MeasureMode| {
-            opencad_ribbon::RibbonItem::Large(crate::large_tool_button(
-                mode.label(),
-                Message::Measure(MeasureAction::Toggle(mode)),
-                self.mode == Some(mode),
-            ))
-        };
-        opencad_ribbon::render_group_items(
-            "MEASURE",
-            vec![
-                mode_button(MeasureMode::Distance),
-                mode_button(MeasureMode::Area),
-                opencad_ribbon::RibbonItem::Small(crate::small_tool_button_when(
-                    "Clear",
-                    Message::Measure(MeasureAction::Clear),
-                    false,
-                    self.current.is_some(),
-                )),
-            ],
-        )
-    }
-
     /// The "Measure" section of the Properties panel, while there is
-    /// something to show.
+    /// something to show. The mode buttons stay available here now that the
+    /// compact View ribbon no longer has a separate Measure group.
     pub fn properties(&self) -> Option<Element<'static, Message>> {
-        if self.mode.is_none() && self.current.is_none() {
-            return None;
-        }
-        let mut section = column![opencad_properties::section_header("Measure")].spacing(0);
+        let distance_active = self.mode == Some(MeasureMode::Distance);
+        let area_active = self.mode == Some(MeasureMode::Area);
+        let mut section = column![
+            opencad_properties::section_header("Measure"),
+            container(
+                row![
+                    button(tr("Distance"))
+                        .on_press(Message::Measure(MeasureAction::Toggle(
+                            MeasureMode::Distance
+                        )))
+                        .style(move |theme, status| ui_style::ribbon_button(
+                            theme,
+                            distance_active,
+                            status,
+                        )),
+                    button(tr("Area"))
+                        .on_press(Message::Measure(MeasureAction::Toggle(MeasureMode::Area)))
+                        .style(move |theme, status| ui_style::ribbon_button(
+                            theme,
+                            area_active,
+                            status,
+                        )),
+                ]
+                .spacing(5),
+            )
+            .padding([3, 8]),
+        ]
+        .spacing(0);
         match &self.current {
             Some(measurement) => {
                 for (label, value) in measurement.rows() {
