@@ -2,6 +2,8 @@
 
 A desktop application for viewing, measuring, editing and converting laser scans and other point clouds, and for turning them into section drawings, meshes and the flat faces of a building. It runs on Windows, Linux and macOS, is written in Rust and needs no browser or web view.
 
+**Browser edition:** there is no supported browser or Frappe edition. The frozen `classic/` 0.3.0 prototype is retained for reference only; it is not the current application and cannot handle the same large scans. To reproduce that historical prototype, run `cd classic && npm ci && npm run build`; the output is `classic/dist/`. Releases and supported builds come from the native Rust workspace in `native/`. The Classic deployment workflow has been retired so new native releases cannot be mistaken for web updates.
+
 [![Latest release](https://img.shields.io/github/v/release/OpenAEC-Foundation/open-pointcloud-studio)](https://github.com/OpenAEC-Foundation/open-pointcloud-studio/releases/latest)
 [![Checks](https://github.com/OpenAEC-Foundation/open-pointcloud-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenAEC-Foundation/open-pointcloud-studio/actions/workflows/ci.yml)
 [![Licence: GPL-3.0-only and LGPL-3.0-or-later](https://img.shields.io/badge/licence-GPL--3.0--only%20%7C%20LGPL--3.0--or--later-blue)](#licences)
