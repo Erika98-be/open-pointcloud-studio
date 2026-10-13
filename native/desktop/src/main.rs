@@ -762,6 +762,67 @@ fn main() -> iced::Result {
             }
         }
     }
+    if first.as_deref() == Some(OsStr::new("--texture-mesh")) {
+        let (Some(source), Some(destination)) = (args.next(), args.next()) else {
+            eprintln!("Usage: open-pointcloud-studio --texture-mesh INPUT_MESH OUTPUT.obj [--texel-size METRES] [--max-resolution PIXELS]");
+            std::process::exit(2);
+        };
+        let mut options = pointcloud_core::AtlasOptions::default();
+        let mut remaining = args;
+        while let Some(flag) = remaining.next() {
+            let Some(value) = remaining.next() else {
+                eprintln!("Texture option needs a value: {}", flag.to_string_lossy());
+                std::process::exit(2);
+            };
+            match flag.to_str() {
+                Some("--texel-size") => {
+                    options.texel_size = value.to_string_lossy().parse().unwrap_or_else(|_| {
+                        eprintln!("--texel-size needs a positive number of metres");
+                        std::process::exit(2);
+                    });
+                }
+                Some("--max-resolution") => {
+                    options.max_resolution = value.to_string_lossy().parse().unwrap_or_else(|_| {
+                        eprintln!("--max-resolution needs a number from 256 to 4096");
+                        std::process::exit(2);
+                    });
+                }
+                _ => {
+                    eprintln!("Unknown texture option: {}", flag.to_string_lossy());
+                    std::process::exit(2);
+                }
+            }
+        }
+        let result = pointcloud_core::read_mesh_geometry(Path::new(&source))
+            .and_then(|mesh| {
+                mesh.ok_or_else(|| {
+                    pointcloud_core::LoadError::InvalidData("input has no mesh faces".into())
+                })
+            })
+            .and_then(|mesh| {
+                pointcloud_core::write_colored_obj_atlas(
+                    &mesh,
+                    Path::new(&destination),
+                    options,
+                    &|| false,
+                    &mut |done, total| {
+                        if done % 65_536 == 0 || done == total {
+                            eprintln!("Texture atlas: {done}/{total} triangles");
+                        }
+                    },
+                )
+            });
+        match result {
+            Ok(report) => {
+                println!("Textured OBJ ready: {} triangles, {} atlas page(s), {} triangles resolution-limited", report.triangles, report.pages, report.resolution_limited);
+                return Ok(());
+            }
+            Err(error) => {
+                eprintln!("Texture mesh failed: {error}");
+                std::process::exit(1);
+            }
+        }
+    }
     if first.as_deref() == Some(OsStr::new("--merge")) {
         let Some(destination) = args.next() else {
             eprintln!(
@@ -1909,6 +1970,12 @@ enum Message {
     CancelMesh,
     ExportMesh,
     MeshExportPathChosen(mesh_export::MeshExportRequest, Option<PathBuf>),
+    TextureMesh,
+    TexturePathChosen(mesh_export::MeshExportRequest, Option<PathBuf>),
+    TextureExported(
+        Option<String>,
+        Result<mesh_export::TextureExportDone, String>,
+    ),
     /// A mesh file was written or could not be, with the job of the local
     /// API that asked for it.
     MeshExported(Option<String>, Result<mesh_export::MeshExportDone, String>),
@@ -4962,6 +5029,11 @@ impl Studio {
                 }
             }
             ApiCommand::ExportMesh { path } => self.api_export_mesh(path),
+            ApiCommand::TextureMesh {
+                path,
+                texel_size,
+                max_resolution,
+            } => self.api_texture_mesh(path, texel_size, max_resolution),
             ApiCommand::SetFaceSettings { options } => {
                 (self.api_set_face_settings(&options), Task::none())
             }
@@ -7159,6 +7231,13 @@ impl Studio {
             Message::ExportMesh => return self.export_mesh(),
             Message::MeshExportPathChosen(request, path) => {
                 return self.mesh_export_path_chosen(request, path);
+            }
+            Message::TextureMesh => return self.export_texture_mesh(),
+            Message::TexturePathChosen(request, path) => {
+                return self.texture_path_chosen(request, path);
+            }
+            Message::TextureExported(api_job_id, result) => {
+                self.texture_exported(api_job_id, result);
             }
             Message::MeshExported(api_job_id, result) => self.mesh_exported(api_job_id, result),
             Message::ToggleBagPanel => return self.set_bag_panel(!self.bag_panel),
@@ -12068,7 +12147,8 @@ fn tool_icon(message: &Message) -> ToolIcon {
         Message::Export
         | Message::ExportSelection
         | Message::ExportSection
-        | Message::ExportMesh => ToolIcon::Export,
+        | Message::ExportMesh
+        | Message::TextureMesh => ToolIcon::Export,
         Message::Decimate | Message::Thin => ToolIcon::Decimate,
         Message::MeshRequest(_) => ToolIcon::Mesh,
         Message::ToggleBagPanel => ToolIcon::Building,

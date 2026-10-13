@@ -184,6 +184,17 @@ changes nothing in the options.
 `export_mesh` saves the mesh the active layer holds: a terrain mesh, a 3D
 surface, a closed mesh, the faces of an opened mesh file or downloaded 3D BAG
 buildings.
+
+`texture_mesh` is a separate job for a mesh with measured vertex colours.
+Give it a new absolute `.obj` `path`, optional `texel_size` in metres (default
+0.02) and `max_resolution` from 256 to 4096 pixels (default 4096). It writes
+editable geometry with UV coordinates, an MTL and one or more PNG atlas pages
+beside the OBJ. The complete job reports `pages`, `triangles` and
+`resolution_limited`, the number of triangles whose chart could not reach the
+requested texel size on one page. The atlas interpolates only stored mesh
+vertex colours; it does not yet project E57 photo pixels or transfer
+point-colour edits into a mesh. A CAD export such as DWG or DXF
+cannot retain these texture images.
 `path` is an absolute destination whose extension chooses the format:
 
 - `.obj`: text, with colours and normals per vertex where the mesh has them.

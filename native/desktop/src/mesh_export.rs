@@ -10,7 +10,9 @@ use std::sync::Arc;
 
 use iced::widget::{button, column, container, text};
 use iced::{Element, Fill, Task};
-use pointcloud_core::{LoadError, MeshFormat, MeshGeometry, MeshTopology};
+use pointcloud_core::{
+    AtlasOptions, AtlasReport, LoadError, MeshFormat, MeshGeometry, MeshTopology,
+};
 use serde_json::{json, Value};
 
 use crate::cloud_transform::CloudTransform;
@@ -98,6 +100,29 @@ pub(crate) struct MeshExportDone {
     /// The point the coordinates of an STL file are relative to, when the
     /// mesh lies too far from zero for the 32-bit floats of that format.
     origin: Option<[f64; 3]>,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct TextureExportDone {
+    path: PathBuf,
+    report: AtlasReport,
+}
+
+fn write_texture(
+    request: &MeshExportRequest,
+    path: PathBuf,
+    options: AtlasOptions,
+) -> Result<TextureExportDone, LoadError> {
+    let moved;
+    let mesh = if request.transform.is_identity() {
+        &*request.mesh
+    } else {
+        moved = in_scene(&request.mesh, request.transform);
+        &moved
+    };
+    let report =
+        pointcloud_core::write_colored_obj_atlas(mesh, &path, options, &|| false, &mut |_, _| {})?;
+    Ok(TextureExportDone { path, report })
 }
 
 impl MeshExportDone {
@@ -293,6 +318,166 @@ pub(crate) fn convert_file(source: &Path, destination: &Path) -> Result<String, 
 }
 
 impl Studio {
+    /// Save measured mesh colours as an OBJ, MTL and PNG atlas.
+    pub(crate) fn export_texture_mesh(&mut self) -> Task<Message> {
+        if self.mesh_export_pending {
+            return Task::none();
+        }
+        let Some(request) = self.mesh_export_request() else {
+            self.status = "Select a coloured surface mesh first".into();
+            return Task::none();
+        };
+        if request.mesh.colors.is_none() {
+            self.status = "This mesh has no measured colours to texture".into();
+            return Task::none();
+        }
+        let stem = request
+            .source
+            .file_stem()
+            .and_then(|name| name.to_str())
+            .unwrap_or("surface")
+            .to_owned();
+        self.mesh_export_pending = true;
+        self.status = "Choose a new name for the textured OBJ…".into();
+        Task::perform(
+            async move {
+                rfd::AsyncFileDialog::new()
+                    .add_filter("Textured OBJ", &["obj"])
+                    .set_file_name(format!("{stem}-textured.obj"))
+                    .save_file()
+                    .await
+                    .map(|selection| selection.path().to_path_buf())
+            },
+            move |path| Message::TexturePathChosen(request.clone(), path),
+        )
+    }
+
+    pub(crate) fn texture_path_chosen(
+        &mut self,
+        request: MeshExportRequest,
+        path: Option<PathBuf>,
+    ) -> Task<Message> {
+        let Some(path) = path else {
+            self.mesh_export_pending = false;
+            self.status = "Texture export cancelled".into();
+            return Task::none();
+        };
+        if !path
+            .extension()
+            .and_then(|value| value.to_str())
+            .is_some_and(|value| value.eq_ignore_ascii_case("obj"))
+            || path == request.source
+        {
+            self.mesh_export_pending = false;
+            self.status = "Choose a new .obj name, different from the source".into();
+            return Task::none();
+        }
+        self.start_texture_export(request, path, AtlasOptions::default(), None)
+    }
+
+    fn start_texture_export(
+        &mut self,
+        request: MeshExportRequest,
+        path: PathBuf,
+        options: AtlasOptions,
+        api_job_id: Option<String>,
+    ) -> Task<Message> {
+        self.mesh_export_pending = true;
+        self.status = format!(
+            "Writing the texture atlas of {} triangles…",
+            request.mesh.triangles.len()
+        );
+        Task::perform(
+            async move {
+                tokio::task::spawn_blocking(move || {
+                    write_texture(&request, path, options).map_err(|error| error.to_string())
+                })
+                .await
+                .map_err(|error| error.to_string())?
+            },
+            move |result| Message::TextureExported(api_job_id.clone(), result),
+        )
+    }
+
+    pub(crate) fn texture_exported(
+        &mut self,
+        api_job_id: Option<String>,
+        result: Result<TextureExportDone, String>,
+    ) {
+        self.mesh_export_pending = false;
+        if let Some(job) = api_job_id.and_then(|id| self.api_jobs.get_mut(&id)) {
+            *job = match &result {
+                Ok(done) => json!({
+                    "state": "complete", "operation": "texture_mesh",
+                    "path": done.path, "triangles": done.report.triangles,
+                    "pages": done.report.pages,
+                    "resolution_limited": done.report.resolution_limited,
+                }),
+                Err(error) => {
+                    json!({"state": "failed", "operation": "texture_mesh", "error": error})
+                }
+            };
+        }
+        match result {
+            Ok(done) => {
+                self.status = format!(
+                    "Textured OBJ saved to {} with {} image page(s)",
+                    done.path.display(),
+                    done.report.pages
+                )
+            }
+            Err(error) => self.status = format!("Texture export failed: {error}"),
+        }
+    }
+
+    pub(crate) fn api_texture_mesh(
+        &mut self,
+        path: PathBuf,
+        texel_size: Option<f64>,
+        max_resolution: Option<u32>,
+    ) -> (Value, Task<Message>) {
+        let refuse = |error: &str| (json!({"ok": false, "error": error}), Task::none());
+        if !path.is_absolute()
+            || !path
+                .extension()
+                .and_then(|value| value.to_str())
+                .is_some_and(|value| value.eq_ignore_ascii_case("obj"))
+        {
+            return refuse("texture_mesh requires an absolute .obj destination");
+        }
+        if self.mesh_export_pending {
+            return refuse("a mesh export is already open or running");
+        }
+        let Some(request) = self.mesh_export_request() else {
+            return refuse("the active layer has no mesh");
+        };
+        if request.mesh.colors.is_none() {
+            return refuse("the active mesh has no measured vertex colours");
+        }
+        if path == request.source || path.exists() {
+            return refuse("choose a new destination different from the source");
+        }
+        let mut options = AtlasOptions::default();
+        if let Some(value) = texel_size {
+            options.texel_size = value;
+        }
+        if let Some(value) = max_resolution {
+            options.max_resolution = value;
+        }
+        if !options.texel_size.is_finite()
+            || options.texel_size <= 0.0
+            || !(256..=4096).contains(&options.max_resolution)
+        {
+            return refuse("texel_size must be positive and max_resolution from 256 to 4096");
+        }
+        let id = self
+            .record_api_job(json!({"state": "running", "operation": "texture_mesh", "path": path}));
+        let task = self.start_texture_export(request, path.clone(), options, Some(id.clone()));
+        (
+            json!({"ok": true, "accepted": true, "job_id": id, "path": path}),
+            task,
+        )
+    }
     /// The mesh of the active layer with what a save needs of that layer.
     fn mesh_export_request(&self) -> Option<MeshExportRequest> {
         self.mesh_export_request_of(self.active)
@@ -508,9 +693,20 @@ impl Studio {
         Some(
             rows.push(
                 container(
-                    button(tr("Export mesh…"))
-                        .on_press_maybe((!self.mesh_export_pending).then_some(Message::ExportMesh))
-                        .style(ui_style::tool),
+                    iced::widget::row![
+                        button(tr("Export mesh…"))
+                            .on_press_maybe(
+                                (!self.mesh_export_pending).then_some(Message::ExportMesh)
+                            )
+                            .style(ui_style::tool),
+                        button(tr("Texture surface…"))
+                            .on_press_maybe(
+                                (!self.mesh_export_pending && mesh.colors.is_some())
+                                    .then_some(Message::TextureMesh)
+                            )
+                            .style(ui_style::tool),
+                    ]
+                    .spacing(6),
                 )
                 .padding([4, 8]),
             )
@@ -1254,6 +1450,56 @@ mod tests {
     }
 
     #[test]
+    fn api_textures_measured_mesh_colours_and_reports_pages() {
+        let directory = tempfile::tempdir().unwrap();
+        let mut studio = studio_with_scan(directory.path());
+        let path = directory.path().join("hall-textured.obj");
+        let command = || ApiCommand::TextureMesh {
+            path: path.clone(),
+            texel_size: Some(0.05),
+            max_resolution: Some(256),
+        };
+        assert_eq!(
+            send(&mut studio, command())["error"],
+            "the active layer has no mesh"
+        );
+        studio.clouds[0].mesh = Some(Arc::new(sheet()));
+        let accepted = send(&mut studio, command());
+        assert_eq!(accepted["accepted"], true);
+        let id = accepted["job_id"].as_str().unwrap().to_owned();
+        assert_eq!(job(&mut studio, &id)["operation"], "texture_mesh");
+        let status = send(&mut studio, ApiCommand::Status);
+        assert_eq!(crate::mcp::busy(&status["result"]), ["mesh_export"]);
+        let result = write_texture(
+            &studio.mesh_export_request().unwrap(),
+            path.clone(),
+            AtlasOptions {
+                texel_size: 0.05,
+                max_resolution: 256,
+            },
+        )
+        .unwrap();
+        studio.texture_exported(Some(id.clone()), Ok(result));
+        let done = job(&mut studio, &id);
+        assert_eq!(done["state"], "complete");
+        assert_eq!(done["triangles"], 3);
+        assert!(done["pages"].as_u64().unwrap() >= 1);
+        assert!(std::fs::read_to_string(path)
+            .unwrap()
+            .contains("mtllib hall-textured.mtl"));
+        assert!(
+            std::fs::read_to_string(directory.path().join("hall-textured.mtl"))
+                .unwrap()
+                .contains("map_Kd hall-textured-atlas-000.png")
+        );
+        assert!(directory
+            .path()
+            .join("hall-textured-atlas-000.png")
+            .exists());
+        assert!(!studio.mesh_export_pending);
+    }
+
+    #[test]
     fn properties_show_the_measured_mesh_in_the_language_in_use() {
         let _language = crate::i18n::TestLanguage::hold(crate::i18n::Language::Table(0));
         let directory = tempfile::tempdir().unwrap();
@@ -1266,6 +1512,7 @@ mod tests {
         assert!(studio.mesh_properties().is_some());
         let _ = studio.view();
         assert_eq!(tr("Export mesh…"), "Mesh exporteren…");
+        assert_eq!(tr("Texture surface…"), "Oppervlak textureren…");
         assert_eq!(tr("Open edges"), "Open randen");
         assert_eq!(tr("Connected parts"), "Samenhangende delen");
     }
