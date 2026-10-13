@@ -757,7 +757,7 @@ impl Studio {
                 .padding([4, 8]),
             );
         }
-        let mut actions = iced::widget::row![
+        let actions = iced::widget::row![
             button(tr("Export mesh…"))
                 .on_press_maybe((!self.mesh_export_pending).then_some(Message::ExportMesh))
                 .style(ui_style::tool),
@@ -769,16 +769,6 @@ impl Studio {
                 .style(ui_style::tool),
         ]
         .spacing(6);
-        if let Some(control) = &self.texture_export {
-            actions = actions.push(
-                button(tr("Cancel texture"))
-                    .on_press_maybe(
-                        (!control.cancelled.load(Ordering::Relaxed))
-                            .then_some(Message::CancelTextureExport),
-                    )
-                    .style(ui_style::tool),
-            );
-        }
         Some(
             rows.push(container(actions).padding([4, 8]))
                 .push(self.cad_viewer_controls())

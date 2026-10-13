@@ -11291,6 +11291,39 @@ impl Studio {
                     .padding([5, 8]),
                 );
         }
+        if let Some(control) = &self.texture_export {
+            let processed = control.processed.load(Ordering::Relaxed);
+            properties = properties
+                .push(opencad_properties::section_header("Texture progress"))
+                .push(
+                    container(
+                        text(format!(
+                            "{processed} / {} {}",
+                            control.total,
+                            i18n::tr("triangles")
+                        ))
+                        .size(11),
+                    )
+                    .padding([6, 8]),
+                )
+                .push(
+                    container(ui_style::progress_bar(
+                        0.0..=1.0,
+                        processed as f32 / control.total.max(1) as f32,
+                    ))
+                    .padding([2, 8])
+                    .width(Fill),
+                )
+                .push(
+                    container(
+                        ui_style::secondary_button(i18n::tr("Cancel texture")).on_press_maybe(
+                            (!control.cancelled.load(Ordering::Relaxed))
+                                .then_some(Message::CancelTextureExport),
+                        ),
+                    )
+                    .padding([5, 8]),
+                );
+        }
         if let Some(job) = &self.merge_job {
             let processed = job.control.processed.load(Ordering::Relaxed);
             properties = properties
