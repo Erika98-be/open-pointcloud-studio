@@ -135,7 +135,7 @@ open-pointcloud-studio --help
 
 ## The first five minutes
 
-The native Rust window has **Start** and **View** ribbons above the 3D scene, a Project Browser at the left and Properties at the right. Start holds the common file, navigation, selection, section, surface and export tools. View holds camera, colour, point density, effects and viewpoints. Groups fold into dropdowns when the window narrows. **File** (*Bestand*) opens the File view, including its Extensions page.
+The native Rust window has one compact **Start** ribbon above the 3D scene, a Project Browser at the left and Properties at the right. Start holds the common file, navigation, selection, section, surface and export tools; camera, colour and point-density controls sit beneath the view cube. Groups fold into dropdowns when the window narrows. **File** (*Bestand*) opens a backstage view with direct file and export actions, the open scans, export settings and an Extensions page.
 
 The interface follows the language of the system, English or Dutch; **Settings > General** (*Instellingen > Algemeen*) changes it. This page uses the English names and, in the steps below, gives the Dutch name in brackets where it differs.
 
@@ -222,7 +222,7 @@ The [user guide](docs/guide.md) has the detail of every heading below.
 - **Filled cut** adds the walls, columns and floors that the slab goes through as filled regions with outlines, and leaves door and window openings open. **Preview** shows these regions over the points before a file is saved.
 - The choices are millimetres or metres, model coordinates or the corner of the box as zero, a layer per scan or per class, layer colours or the colours of the scan, and the file versions R2004 to R2018.
 - **Open in CAD viewer** shows the saved DXF or DWG file read-only in [Open CAD Studio](https://github.com/HakanSeven12/OpenCADStudio), the open-source CAD application that comes with the application, and **Open after export** does so after every export; the same holds for faces and meshes saved as DXF or DWG. Without it, as in a build from source that did not build it, the program chosen in Settings or an installed Open CAD Studio is used, and otherwise the program the system has for the file.
-- The **Drawing view** shows the drawing in the application itself in place of the 3D scene as soon as it is exported, or after a preview, and whenever it is chosen under VIEWS in the Project Browser: points, filled cut, outlines, frame and text on a light sheet, with a switch per layer, pan and zoom, a scale bar and the coordinates under the pointer. Any DXF or DWG file opens there too, from **Open** in the File view.
+- The **Drawing view** shows the drawing in the application itself in place of the 3D scene as soon as it is exported, or after a preview, and whenever it is chosen under VIEWS in the Project Browser: points, filled cut, outlines, frame and text on a light sheet, with a switch per layer, pan and zoom, a scale bar and the coordinates under the pointer. Any DXF or DWG file opens there too, from **Drawing (DXF/DWG)…** in the File menu.
 - The filled cut is traced from the points and has limits: a wall scanned from one side is drawn as a thin strip, gaps under about half a metre are closed, and furniture in the slab is drawn unless its points are deleted first. The [user guide](docs/guide.md#the-filled-cut-and-its-limits) lists them.
 
 ### Sheets
