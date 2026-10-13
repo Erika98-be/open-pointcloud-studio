@@ -1971,6 +1971,8 @@ enum Message {
     ExportMesh,
     MeshExportPathChosen(mesh_export::MeshExportRequest, Option<PathBuf>),
     TextureMesh,
+    TexturePoll,
+    CancelTextureExport,
     TexturePathChosen(mesh_export::MeshExportRequest, Option<PathBuf>),
     TextureExported(
         Option<String>,
@@ -2266,6 +2268,7 @@ struct Studio {
     section_enabled: bool,
     section_export_pending: bool,
     mesh_export_pending: bool,
+    texture_export: Option<Arc<mesh_export::TextureExportControl>>,
     mesh_dialog_pending: bool,
     mesh_job: Option<MeshJob>,
     merge_job: Option<MergeJob>,
@@ -2918,6 +2921,7 @@ impl Default for Studio {
             section_enabled: false,
             section_export_pending: false,
             mesh_export_pending: false,
+            texture_export: None,
             mesh_dialog_pending: false,
             mesh_job: None,
             merge_job: None,
@@ -5034,6 +5038,7 @@ impl Studio {
                 texel_size,
                 max_resolution,
             } => self.api_texture_mesh(path, texel_size, max_resolution),
+            ApiCommand::CancelTextureMesh => (self.cancel_texture_export(), Task::none()),
             ApiCommand::SetFaceSettings { options } => {
                 (self.api_set_face_settings(&options), Task::none())
             }
@@ -5469,6 +5474,7 @@ impl Studio {
         self.cancel_faces();
         self.cancel_mesh_to_plans();
         self.cancel_photo_colours();
+        self.cancel_texture_export();
         if let Some(job) = &self.merge_job {
             job.control.cancelled.store(true, Ordering::Relaxed);
         }
@@ -7233,6 +7239,10 @@ impl Studio {
                 return self.mesh_export_path_chosen(request, path);
             }
             Message::TextureMesh => return self.export_texture_mesh(),
+            Message::TexturePoll => return self.texture_poll(),
+            Message::CancelTextureExport => {
+                self.cancel_texture_export();
+            }
             Message::TexturePathChosen(request, path) => {
                 return self.texture_path_chosen(request, path);
             }

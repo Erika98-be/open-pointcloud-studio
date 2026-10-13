@@ -1053,5 +1053,6 @@
   "Contour deviation": "Contourafwijking",
   "Short edges kept": "Korte randen behouden",
   "Writes measured mesh vertex colours as a PNG texture atlas with an OBJ and MTL.": "Schrijft de gemeten hoekpuntkleuren van een mesh als PNG-textuuratlas met OBJ en MTL.",
-  "Texture surface…": "Oppervlak textureren…"
+  "Texture surface…": "Oppervlak textureren…",
+  "Cancel texture": "Textureren annuleren"
 }

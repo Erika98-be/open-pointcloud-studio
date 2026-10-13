@@ -6,6 +6,7 @@
 //! the API show that.
 
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 
 use iced::widget::{button, column, container, text};
@@ -108,10 +109,18 @@ pub(crate) struct TextureExportDone {
     report: AtlasReport,
 }
 
+pub(crate) struct TextureExportControl {
+    pub(crate) cancelled: AtomicBool,
+    pub(crate) processed: AtomicUsize,
+    pub(crate) total: usize,
+    pub(crate) api_job_id: Option<String>,
+}
+
 fn write_texture(
     request: &MeshExportRequest,
     path: PathBuf,
     options: AtlasOptions,
+    control: &TextureExportControl,
 ) -> Result<TextureExportDone, LoadError> {
     let moved;
     let mesh = if request.transform.is_identity() {
@@ -120,8 +129,13 @@ fn write_texture(
         moved = in_scene(&request.mesh, request.transform);
         &moved
     };
-    let report =
-        pointcloud_core::write_colored_obj_atlas(mesh, &path, options, &|| false, &mut |_, _| {})?;
+    let report = pointcloud_core::write_colored_obj_atlas(
+        mesh,
+        &path,
+        options,
+        &|| control.cancelled.load(Ordering::Relaxed),
+        &mut |processed, _| control.processed.store(processed, Ordering::Relaxed),
+    )?;
     Ok(TextureExportDone { path, report })
 }
 
@@ -383,20 +397,67 @@ impl Studio {
         api_job_id: Option<String>,
     ) -> Task<Message> {
         self.mesh_export_pending = true;
+        let control = Arc::new(TextureExportControl {
+            cancelled: AtomicBool::new(false),
+            processed: AtomicUsize::new(0),
+            total: request.mesh.triangles.len(),
+            api_job_id: api_job_id.clone(),
+        });
+        self.texture_export = Some(Arc::clone(&control));
         self.status = format!(
             "Writing the texture atlas of {} triangles…",
             request.mesh.triangles.len()
         );
-        Task::perform(
+        let worker = Task::perform(
             async move {
                 tokio::task::spawn_blocking(move || {
-                    write_texture(&request, path, options).map_err(|error| error.to_string())
+                    write_texture(&request, path, options, &control)
+                        .map_err(|error| error.to_string())
                 })
                 .await
                 .map_err(|error| error.to_string())?
             },
             move |result| Message::TextureExported(api_job_id.clone(), result),
+        );
+        Task::batch([worker, Self::texture_poll_task()])
+    }
+
+    fn texture_poll_task() -> Task<Message> {
+        Task::perform(
+            async { tokio::time::sleep(std::time::Duration::from_millis(250)).await },
+            |()| Message::TexturePoll,
         )
+    }
+
+    pub(crate) fn texture_poll(&mut self) -> Task<Message> {
+        let Some(control) = self.texture_export.as_ref() else {
+            return Task::none();
+        };
+        let processed = control.processed.load(Ordering::Relaxed);
+        let total = control.total;
+        self.status = if control.cancelled.load(Ordering::Relaxed) {
+            "Cancelling texture export…".into()
+        } else {
+            format!("Texturing surface: {processed}/{total} triangles")
+        };
+        if let Some(job) = control
+            .api_job_id
+            .as_ref()
+            .and_then(|id| self.api_jobs.get_mut(id))
+        {
+            job["processed"] = json!(processed);
+            job["total"] = json!(total);
+        }
+        Self::texture_poll_task()
+    }
+
+    pub(crate) fn cancel_texture_export(&mut self) -> Value {
+        let Some(control) = self.texture_export.as_ref() else {
+            return json!({"ok": false, "error": "no texture export is running"});
+        };
+        control.cancelled.store(true, Ordering::Relaxed);
+        self.status = "Cancelling texture export…".into();
+        json!({"ok": true, "cancelled": true})
     }
 
     pub(crate) fn texture_exported(
@@ -405,6 +466,10 @@ impl Studio {
         result: Result<TextureExportDone, String>,
     ) {
         self.mesh_export_pending = false;
+        let cancelled = self
+            .texture_export
+            .take()
+            .is_some_and(|control| control.cancelled.load(Ordering::Relaxed) && result.is_err());
         if let Some(job) = api_job_id.and_then(|id| self.api_jobs.get_mut(&id)) {
             *job = match &result {
                 Ok(done) => json!({
@@ -413,6 +478,7 @@ impl Studio {
                     "pages": done.report.pages,
                     "resolution_limited": done.report.resolution_limited,
                 }),
+                Err(_) if cancelled => json!({"state": "cancelled", "operation": "texture_mesh"}),
                 Err(error) => {
                     json!({"state": "failed", "operation": "texture_mesh", "error": error})
                 }
@@ -426,6 +492,7 @@ impl Studio {
                     done.report.pages
                 )
             }
+            Err(_) if cancelled => self.status = "Texture export cancelled".into(),
             Err(error) => self.status = format!("Texture export failed: {error}"),
         }
     }
@@ -690,28 +757,32 @@ impl Studio {
                 .padding([4, 8]),
             );
         }
-        Some(
-            rows.push(
-                container(
-                    iced::widget::row![
-                        button(tr("Export mesh…"))
-                            .on_press_maybe(
-                                (!self.mesh_export_pending).then_some(Message::ExportMesh)
-                            )
-                            .style(ui_style::tool),
-                        button(tr("Texture surface…"))
-                            .on_press_maybe(
-                                (!self.mesh_export_pending && mesh.colors.is_some())
-                                    .then_some(Message::TextureMesh)
-                            )
-                            .style(ui_style::tool),
-                    ]
-                    .spacing(6),
+        let mut actions = iced::widget::row![
+            button(tr("Export mesh…"))
+                .on_press_maybe((!self.mesh_export_pending).then_some(Message::ExportMesh))
+                .style(ui_style::tool),
+            button(tr("Texture surface…"))
+                .on_press_maybe(
+                    (!self.mesh_export_pending && mesh.colors.is_some())
+                        .then_some(Message::TextureMesh)
                 )
-                .padding([4, 8]),
-            )
-            .push(self.cad_viewer_controls())
-            .into(),
+                .style(ui_style::tool),
+        ]
+        .spacing(6);
+        if let Some(control) = &self.texture_export {
+            actions = actions.push(
+                button(tr("Cancel texture"))
+                    .on_press_maybe(
+                        (!control.cancelled.load(Ordering::Relaxed))
+                            .then_some(Message::CancelTextureExport),
+                    )
+                    .style(ui_style::tool),
+            );
+        }
+        Some(
+            rows.push(container(actions).padding([4, 8]))
+                .push(self.cad_viewer_controls())
+                .into(),
         )
     }
 }
@@ -1468,6 +1539,14 @@ mod tests {
         assert_eq!(accepted["accepted"], true);
         let id = accepted["job_id"].as_str().unwrap().to_owned();
         assert_eq!(job(&mut studio, &id)["operation"], "texture_mesh");
+        studio
+            .texture_export
+            .as_ref()
+            .unwrap()
+            .processed
+            .store(1, Ordering::Relaxed);
+        let _ = studio.texture_poll();
+        assert_eq!(job(&mut studio, &id)["processed"], 1);
         let status = send(&mut studio, ApiCommand::Status);
         assert_eq!(crate::mcp::busy(&status["result"]), ["mesh_export"]);
         let result = write_texture(
@@ -1477,6 +1556,7 @@ mod tests {
                 texel_size: 0.05,
                 max_resolution: 256,
             },
+            studio.texture_export.as_ref().unwrap(),
         )
         .unwrap();
         studio.texture_exported(Some(id.clone()), Ok(result));
@@ -1495,6 +1575,48 @@ mod tests {
         assert!(directory
             .path()
             .join("hall-textured-atlas-000.png")
+            .exists());
+        assert!(!studio.mesh_export_pending);
+    }
+
+    #[test]
+    fn api_cancels_a_texture_before_any_export_file_is_published() {
+        let directory = tempfile::tempdir().unwrap();
+        let mut studio = studio_with_scan(directory.path());
+        studio.clouds[0].mesh = Some(Arc::new(sheet()));
+        let path = directory.path().join("cancelled-texture.obj");
+        let accepted = send(
+            &mut studio,
+            ApiCommand::TextureMesh {
+                path: path.clone(),
+                texel_size: None,
+                max_resolution: Some(256),
+            },
+        );
+        let id = accepted["job_id"].as_str().unwrap().to_owned();
+        let control = Arc::clone(studio.texture_export.as_ref().unwrap());
+        assert_eq!(
+            send(&mut studio, ApiCommand::CancelTextureMesh)["cancelled"],
+            true
+        );
+        assert!(control.cancelled.load(Ordering::Relaxed));
+        let result = write_texture(
+            &studio.mesh_export_request().unwrap(),
+            path.clone(),
+            AtlasOptions {
+                max_resolution: 256,
+                ..AtlasOptions::default()
+            },
+            &control,
+        );
+        assert!(matches!(result, Err(LoadError::Cancelled)));
+        studio.texture_exported(Some(id.clone()), Err("cancelled".into()));
+        assert_eq!(job(&mut studio, &id)["state"], "cancelled");
+        assert!(!path.exists());
+        assert!(!directory.path().join("cancelled-texture.mtl").exists());
+        assert!(!directory
+            .path()
+            .join("cancelled-texture-atlas-000.png")
             .exists());
         assert!(!studio.mesh_export_pending);
     }

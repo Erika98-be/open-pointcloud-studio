@@ -274,6 +274,7 @@ pub enum ApiCommand {
         #[serde(default)]
         max_resolution: Option<u32>,
     },
+    CancelTextureMesh,
     SetFaceSettings {
         #[serde(flatten)]
         options: crate::faces::FaceOptions,
