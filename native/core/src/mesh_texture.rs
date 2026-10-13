@@ -167,8 +167,13 @@ pub fn write_colored_obj_atlas(
     let mut mtl = BufWriter::new(File::create(stage.path().join(&material_name))?);
     writeln!(obj, "# Textured mesh exported by Open Pointcloud Studio")?;
     writeln!(obj, "mtllib {material_name}")?;
-    for vertex in &mesh.vertices {
-        writeln!(obj, "v {} {} {}", vertex[0], vertex[1], vertex[2])?;
+    let colors = mesh.colors.as_ref().expect("validated colours");
+    for (vertex, color) in mesh.vertices.iter().zip(colors) {
+        writeln!(
+            obj,
+            "v {} {} {} {} {} {}",
+            vertex[0], vertex[1], vertex[2], color[0], color[1], color[2]
+        )?;
     }
     if let Some(normals) = &mesh.normals {
         if normals.len() != mesh.vertices.len()
@@ -191,7 +196,6 @@ pub fn write_colored_obj_atlas(
     let mut occupied = false;
     let mut images = Vec::<(PathBuf, PathBuf)>::new();
     let mut limited = 0;
-    let colors = mesh.colors.as_ref().expect("validated colours");
     for (place, face) in mesh.triangles.iter().copied().enumerate() {
         if cancelled() {
             return Err(LoadError::Cancelled);
@@ -352,6 +356,8 @@ mod tests {
         let obj = fs::read_to_string(&path).unwrap();
         assert!(obj.contains("mtllib triangle.mtl"));
         assert!(obj.contains("f 1/1 2/2 3/3"));
+        let reopened = crate::read_obj_mesh(&path).unwrap();
+        assert_eq!(reopened.colors, mesh.colors);
         assert!(fs::read_to_string(folder.path().join("triangle.mtl"))
             .unwrap()
             .contains("map_Kd triangle-atlas-000.png"));

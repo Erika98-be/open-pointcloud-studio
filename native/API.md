@@ -189,7 +189,8 @@ buildings.
 Give it a new absolute `.obj` `path`, optional `texel_size` in metres (default
 0.02) and `max_resolution` from 256 to 4096 pixels (default 4096). It writes
 editable geometry with UV coordinates, an MTL and one or more PNG atlas pages
-beside the OBJ. The complete job reports `pages`, `triangles` and
+beside the OBJ. Vertex RGB is also retained as a native-viewport fallback.
+The complete job reports `pages`, `triangles` and
 `resolution_limited`, the number of triangles whose chart could not reach the
 requested texel size on one page. The atlas interpolates only stored mesh
 vertex colours; it does not yet project E57 photo pixels or transfer
