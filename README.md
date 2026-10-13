@@ -62,7 +62,7 @@ The zip holds the same application: unpack it anywhere and start `open-pointclou
 
 Open the disk image and drag **Open Pointcloud Studio** onto the Applications folder. The application is one file for Apple and Intel processors. It is offered under "Open With" for E57, LAS, LAZ, PLY, PCD, PTX and PTS files and scan project files (`.rcp`), without changing which program opens them by default.
 
-It is not signed with a paid developer certificate and not notarised, so macOS refuses to start it the first time. Allow it once:
+The v0.9.5 macOS package is signed ad hoc and not notarised, so macOS may refuse its first start. Later release notes state whether their app and disk image are Developer ID signed and notarized; when they are, open the app normally. For an ad hoc release, allow it once:
 
 - macOS 15 and later: start the application, close the message, open **System Settings > Privacy & Security**, scroll to **Security**, choose **Open Anyway** and confirm.
 - macOS 11 to 14: Control-click the application, choose **Open** and confirm.
