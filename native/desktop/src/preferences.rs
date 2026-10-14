@@ -60,6 +60,8 @@ pub(crate) struct Preferences {
     pub photo_compare: bool,
     /// Share of the comparison width occupied by the 3D model.
     pub photo_split_ratio: f32,
+    /// Stack the model over the photo instead of placing them side by side.
+    pub photo_split_vertical: bool,
 }
 
 /// A text, or none when the value is no text.
@@ -113,6 +115,7 @@ impl Default for Preferences {
             view_tab: None,
             photo_compare: false,
             photo_split_ratio: 0.5,
+            photo_split_vertical: false,
         }
     }
 }
@@ -288,6 +291,7 @@ mod tests {
             view_tab: Some("drawing:b2".into()),
             photo_compare: true,
             photo_split_ratio: 0.65,
+            photo_split_vertical: true,
             ..Preferences::default()
         };
         save_to(&path, &settings).unwrap();
@@ -309,6 +313,7 @@ mod tests {
         let repaired = load_from(&path);
         assert!(repaired.photo_compare);
         assert_eq!(repaired.photo_split_ratio, 0.5);
+        assert!(!repaired.photo_split_vertical);
 
         let high_budget = Preferences {
             budget: MAX_POINT_BUDGET,

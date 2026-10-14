@@ -2015,6 +2015,7 @@ enum Message {
     Photos(file_photos::PhotoAction),
     TogglePhotoCompare,
     PhotoSplitRatio(f32),
+    TogglePhotoSplitAxis,
     PhotoSplitFinished,
     CompareModel(view_tabs::CompareAction),
     Budget(u32),
@@ -2186,6 +2187,7 @@ struct Studio {
     photos: file_photos::PhotoTool,
     photo_compare: bool,
     photo_split_ratio: f32,
+    photo_split_vertical: bool,
     /// Movement keys held down, indexed by `WalkKey`, and the faster pace.
     walk_keys: [bool; 6],
     walk_fast: bool,
@@ -2842,6 +2844,7 @@ impl Default for Studio {
             photos: file_photos::PhotoTool::default(),
             photo_compare: settings.photo_compare,
             photo_split_ratio: settings.photo_split_ratio,
+            photo_split_vertical: settings.photo_split_vertical,
             walk_keys: [false; 6],
             walk_fast: false,
             walk_tick: None,
@@ -3020,6 +3023,7 @@ impl Studio {
             view_tab: self.tabs.kept().1.clone(),
             photo_compare: self.photo_compare,
             photo_split_ratio: self.photo_split_ratio,
+            photo_split_vertical: self.photo_split_vertical,
         }
     }
 
@@ -4242,7 +4246,7 @@ impl Studio {
                     )
                 }
             }
-            ApiCommand::SetPhotoSplit { ratio } => {
+            ApiCommand::SetPhotoSplit { ratio, vertical } => {
                 if !ratio.is_finite() || !(0.25..=0.75).contains(&ratio) {
                     (
                         json!({"ok": false, "error": "split ratio must be from 0.25 to 0.75"}),
@@ -4250,9 +4254,12 @@ impl Studio {
                     )
                 } else {
                     self.photo_split_ratio = ratio;
+                    if let Some(vertical) = vertical {
+                        self.photo_split_vertical = vertical;
+                    }
                     self.revision += 1;
                     (
-                        json!({"ok": true, "ratio": ratio}),
+                        json!({"ok": true, "ratio": ratio, "vertical": self.photo_split_vertical}),
                         self.queue_preferences_save(),
                     )
                 }
@@ -8984,6 +8991,11 @@ impl Studio {
                 self.photo_split_ratio = ratio.clamp(0.25, 0.75);
                 self.revision += 1;
             }
+            Message::TogglePhotoSplitAxis => {
+                self.photo_split_vertical = !self.photo_split_vertical;
+                self.revision += 1;
+                return self.queue_preferences_save();
+            }
             Message::PhotoSplitFinished => return self.queue_preferences_save(),
             Message::CompareModel(action) => self.update_compare_model(action),
             Message::Sheet(action) => return self.update_sheet_dialog(action),
@@ -11069,7 +11081,11 @@ impl Studio {
         } else {
             let mut point_view = self.point_viewport();
             if photo_compare {
-                point_view.viewport_size.width *= 1.0 - self.photo_split_ratio;
+                if self.photo_split_vertical {
+                    point_view.viewport_size.height *= 1.0 - self.photo_split_ratio;
+                } else {
+                    point_view.viewport_size.width *= 1.0 - self.photo_split_ratio;
+                }
             }
             stack![
                 gpu_viewport::GpuViewport {
@@ -11680,7 +11696,11 @@ impl Studio {
             viewport = viewport.push(strip);
         }
         if let Some(mut model_view) = compare_model {
-            model_view.viewport_size.width *= self.photo_split_ratio;
+            if self.photo_split_vertical {
+                model_view.viewport_size.height *= self.photo_split_ratio;
+            } else {
+                model_view.viewport_size.width *= self.photo_split_ratio;
+            }
             let model_canvas = stack![
                 gpu_viewport::GpuViewport {
                     overlay: model_view
@@ -11705,30 +11725,48 @@ impl Studio {
                         container::Style::default().background(ui_theme::colors(theme).bg_lighter)
                     })
             };
-            let left_weight = (self.photo_split_ratio * 1000.0).round() as u16;
-            let panes = row![
+            let model_weight = (self.photo_split_ratio * 1000.0).round() as u16;
+            let model = column![
+                button(text(i18n::tr("3D model")).size(11))
+                    .on_press(Message::Tabs(view_tabs::TabAction::Show(
+                        view_tabs::TabId::Model,
+                    )))
+                    .style(ui_style::tool)
+                    .width(Fill),
+                model_canvas,
+            ];
+            let photo = column![header(photo_name), canvas];
+            let panes: Element<'_, Message> = if self.photo_split_vertical {
                 column![
-                    button(text(i18n::tr("3D model")).size(11))
-                        .on_press(Message::Tabs(view_tabs::TabAction::Show(
-                            view_tabs::TabId::Model,
-                        )))
-                        .style(ui_style::tool)
-                        .width(Fill),
-                    model_canvas,
+                    model
+                        .width(Fill)
+                        .height(iced::Length::FillPortion(model_weight)),
+                    photo
+                        .width(Fill)
+                        .height(iced::Length::FillPortion(1000 - model_weight)),
                 ]
-                .width(iced::Length::FillPortion(left_weight))
-                .height(Fill),
-                column![header(photo_name), canvas]
-                    .width(iced::Length::FillPortion(1000 - left_weight))
-                    .height(Fill),
-            ]
-            .width(Fill)
-            .height(Fill);
+                .width(Fill)
+                .height(Fill)
+                .into()
+            } else {
+                row![
+                    model
+                        .width(iced::Length::FillPortion(model_weight))
+                        .height(Fill),
+                    photo
+                        .width(iced::Length::FillPortion(1000 - model_weight))
+                        .height(Fill),
+                ]
+                .width(Fill)
+                .height(Fill)
+                .into()
+            };
             viewport = viewport.push(
                 stack![
                     panes,
                     Canvas::new(CompareDivider {
                         ratio: self.photo_split_ratio,
+                        vertical: self.photo_split_vertical,
                     })
                     .width(Fill)
                     .height(Fill),
@@ -13576,6 +13614,7 @@ fn hover_ring(frame: &mut Frame, center: UiPoint, radius: f32) {
 
 struct CompareDivider {
     ratio: f32,
+    vertical: bool,
 }
 
 impl canvas::Program<Message> for CompareDivider {
@@ -13590,9 +13629,14 @@ impl canvas::Program<Message> for CompareDivider {
     ) -> (event::Status, Option<Message>) {
         match event {
             canvas::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) => {
-                let near = cursor
-                    .position_in(bounds)
-                    .is_some_and(|point| (point.x - bounds.width * self.ratio).abs() <= 8.0);
+                let near = cursor.position_in(bounds).is_some_and(|point| {
+                    let distance = if self.vertical {
+                        point.y - bounds.height * self.ratio
+                    } else {
+                        point.x - bounds.width * self.ratio
+                    };
+                    distance.abs() <= 8.0
+                });
                 *dragging = near;
                 (
                     if near {
@@ -13613,7 +13657,12 @@ impl canvas::Program<Message> for CompareDivider {
                 let Some(position) = cursor.position_from(bounds.position()) else {
                     return (event::Status::Captured, None);
                 };
-                let ratio = (position.x / bounds.width).clamp(0.25, 0.75);
+                let ratio = if self.vertical {
+                    position.y / bounds.height
+                } else {
+                    position.x / bounds.width
+                }
+                .clamp(0.25, 0.75);
                 (
                     event::Status::Captured,
                     Some(Message::PhotoSplitRatio(ratio)),
@@ -13632,18 +13681,34 @@ impl canvas::Program<Message> for CompareDivider {
         _cursor: mouse::Cursor,
     ) -> Vec<Geometry> {
         let mut frame = Frame::new(renderer, bounds.size());
-        let x = bounds.width * self.ratio;
+        let line = if self.vertical {
+            let y = bounds.height * self.ratio;
+            canvas::Path::line(UiPoint::new(0.0, y), UiPoint::new(bounds.width, y))
+        } else {
+            let x = bounds.width * self.ratio;
+            canvas::Path::line(UiPoint::new(x, 0.0), UiPoint::new(x, bounds.height))
+        };
         frame.stroke(
-            &canvas::Path::line(UiPoint::new(x, 0.0), UiPoint::new(x, bounds.height)),
+            &line,
             canvas::Stroke::default()
                 .with_color(Color::from_rgb8(205, 211, 220))
                 .with_width(1.0),
         );
-        frame.stroke(
-            &canvas::Path::line(
+        let handle = if self.vertical {
+            let y = bounds.height * self.ratio;
+            canvas::Path::line(
+                UiPoint::new(bounds.width * 0.5 - 18.0, y),
+                UiPoint::new(bounds.width * 0.5 + 18.0, y),
+            )
+        } else {
+            let x = bounds.width * self.ratio;
+            canvas::Path::line(
                 UiPoint::new(x, bounds.height * 0.5 - 18.0),
                 UiPoint::new(x, bounds.height * 0.5 + 18.0),
-            ),
+            )
+        };
+        frame.stroke(
+            &handle,
             canvas::Stroke::default()
                 .with_color(Color::from_rgb8(114, 124, 138))
                 .with_width(3.0),
@@ -13658,11 +13723,19 @@ impl canvas::Program<Message> for CompareDivider {
         cursor: mouse::Cursor,
     ) -> mouse::Interaction {
         if *dragging
-            || cursor
-                .position_in(bounds)
-                .is_some_and(|point| (point.x - bounds.width * self.ratio).abs() <= 8.0)
+            || cursor.position_in(bounds).is_some_and(|point| {
+                if self.vertical {
+                    (point.y - bounds.height * self.ratio).abs() <= 8.0
+                } else {
+                    (point.x - bounds.width * self.ratio).abs() <= 8.0
+                }
+            })
         {
-            mouse::Interaction::ResizingHorizontally
+            if self.vertical {
+                mouse::Interaction::ResizingVertically
+            } else {
+                mouse::Interaction::ResizingHorizontally
+            }
         } else {
             mouse::Interaction::default()
         }

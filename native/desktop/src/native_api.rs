@@ -97,6 +97,8 @@ pub enum ApiCommand {
     },
     SetPhotoSplit {
         ratio: f32,
+        #[serde(default)]
+        vertical: Option<bool>,
     },
     NextPhoto,
     PreviousPhoto,

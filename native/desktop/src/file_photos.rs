@@ -1095,6 +1095,7 @@ impl Studio {
             "blend": self.photos.blend,
             "compare_with_3d": self.photo_compare && self.shown_photo().is_some(),
             "split_ratio": self.photo_split_ratio,
+            "split_vertical": self.photo_split_vertical,
             "cached": self.photos.cache.len(),
             "cached_bytes": self.photos.cache.iter().map(|photo| photo.bytes()).sum::<usize>(),
             "view": view,
@@ -1319,16 +1320,31 @@ impl Studio {
             text(format!("{:.0}%", self.photos.blend * 100.0))
                 .size(11)
                 .width(34),
+        ]
+        .spacing(6)
+        .align_y(iced::Alignment::Center);
+        let comparison = row![
             button(text(tr("Compare with 3D")).size(11))
                 .on_press(Message::TogglePhotoCompare)
                 .style(move |theme, status| {
                     ui_style::ribbon_button(theme, self.photo_compare, status)
                 })
                 .padding([2, 7]),
+            button(
+                text(if self.photo_split_vertical {
+                    tr("Side by side")
+                } else {
+                    tr("Stack panes")
+                })
+                .size(11)
+            )
+            .on_press_maybe(self.photo_compare.then_some(Message::TogglePhotoSplitAxis))
+            .style(ui_style::tool)
+            .padding([2, 7]),
         ]
         .spacing(6)
         .align_y(iced::Alignment::Center);
-        let panel = column![navigation, blend].spacing(3);
+        let panel = column![navigation, blend, comparison].spacing(3);
         Some(
             container(container(panel).padding([4, 8]).style(|theme| {
                 let colors = crate::ui_theme::colors(theme);
@@ -2185,6 +2201,17 @@ mod tests {
             false
         );
         assert_eq!(studio.photo_split_ratio, 0.65);
+        let stacked = send(
+            &mut studio,
+            json!({"command": "set_photo_split", "ratio": 0.6, "vertical": true}),
+        );
+        assert_eq!(stacked["vertical"], true);
+        assert!(studio.photo_split_vertical);
+        assert_eq!(
+            send(&mut studio, json!({"command": "status"}))["result"]["photos"]["split_vertical"],
+            true
+        );
+        let _ = studio.view();
         let model = studio
             .compare_model_viewport(studio.point_viewport())
             .expect("the 3D model has a saved camera");
@@ -2243,7 +2270,10 @@ mod tests {
         use iced::widget::canvas::Program;
         use iced::{event, mouse, Rectangle};
 
-        let divider = crate::CompareDivider { ratio: 0.5 };
+        let divider = crate::CompareDivider {
+            ratio: 0.5,
+            vertical: false,
+        };
         let bounds = Rectangle::new(UiPoint::ORIGIN, Size::new(800.0, 600.0));
         let mut dragging = false;
         let press = canvas::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left));
@@ -2280,6 +2310,33 @@ mod tests {
             mouse::Cursor::Available(UiPoint::new(600.0, 300.0)),
         );
         assert!(matches!(moved, Some(Message::PhotoSplitRatio(ratio)) if ratio == 0.75));
+        let vertical = crate::CompareDivider {
+            ratio: 0.5,
+            vertical: true,
+        };
+        let mut vertical_drag = false;
+        assert_eq!(
+            vertical
+                .update(
+                    &mut vertical_drag,
+                    canvas::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)),
+                    bounds,
+                    mouse::Cursor::Available(UiPoint::new(400.0, 300.0)),
+                )
+                .0,
+            event::Status::Captured
+        );
+        let (_, moved) = vertical.update(
+            &mut vertical_drag,
+            canvas::Event::Mouse(mouse::Event::CursorMoved {
+                position: UiPoint::new(400.0, 390.0),
+            }),
+            bounds,
+            mouse::Cursor::Available(UiPoint::new(400.0, 390.0)),
+        );
+        assert!(
+            matches!(moved, Some(Message::PhotoSplitRatio(ratio)) if (ratio - 0.65).abs() < 1e-5)
+        );
         let _ = divider.update(
             &mut dragging,
             canvas::Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)),
