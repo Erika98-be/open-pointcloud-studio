@@ -385,8 +385,11 @@ fn table() -> Vec<Tool> {
         tool("photo_blend", Command, "Sets how much of the entered photo covers the points, as the Photo slider does: 0 shows the points only, 1 the photo only. It stays for later photos.", vec![
             required("value", number_in("From 0 to 1", 0.0, 1.0)),
         ]),
-        tool("set_photo_compare", Command, "Shows the active E57 photo beside a read-only live view of the 3D model, or returns to one viewport. Measuring and picking remain active in the photo pane. Requires an entered photo when enabled.", vec![
+        tool("set_photo_compare", Command, "Shows the active E57 photo beside a live 3D model pane with its own camera controls, or returns to one viewport. Measuring and picking remain active in the photo pane. Requires an entered photo when enabled.", vec![
             required("enabled", boolean("true for side-by-side comparison")),
+        ]),
+        tool("set_photo_split", Command, "Sets the model pane's share of the width while comparing an E57 photo with 3D. The divider can also be dragged in the GUI.", vec![
+            required("ratio", number_in("From 0.25 to 0.75", 0.25, 0.75)),
         ]),
         tool("next_photo", Command, "Enters the next photo along the path of the entered photo, as Page Down does; fails at the last photo.", vec![]),
         tool("previous_photo", Command, "Enters the previous photo along the path of the entered photo, as Page Up does; fails at the first photo.", vec![]),

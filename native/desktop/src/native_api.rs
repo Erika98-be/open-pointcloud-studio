@@ -95,6 +95,9 @@ pub enum ApiCommand {
     SetPhotoCompare {
         enabled: bool,
     },
+    SetPhotoSplit {
+        ratio: f32,
+    },
     NextPhoto,
     PreviousPhoto,
     ZoomAll,

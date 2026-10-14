@@ -1653,6 +1653,7 @@ layer with photo colours.
 | `enter_photo` | `index`, optional `layer` | Stands where a photo was taken and lays the photo over the points; answers with the `photo` as `list_photos` gives it and the `walk` camera. See [Photos of a file](#photos-of-a-file) |
 | `photo_blend` | `value` | How much of the entered photo covers the points, from 0 (the points only) to 1 (the photo only); it stays for later photos |
 | `set_photo_compare` | `enabled` | Shows the entered E57 photo beside a live 3D model pane with separate orbit, pan, zoom and view-cube controls, or returns to one viewport; picking and measuring stay in the photo pane |
+| `set_photo_split` | `ratio` | Sets the 3D pane's share of the comparison width from 0.25 to 0.75; the same divider can be dragged in the GUI and `status.result.photos.split_ratio` reports it |
 | `next_photo` | — | Enters the next photo along the path of the entered photo; refused at the last photo and while no photo is entered |
 | `previous_photo` | — | Enters the previous photo along the path; refused at the first photo and while no photo is entered |
 | `colour_from_photos` | optional `layer`, `max_distance`, `blend` | Gives the remaining points of a layer in the section box and class filters, or all of them, the colours its photos see them with; returns a job ID. See [Colour from photos](#colour-from-photos) |

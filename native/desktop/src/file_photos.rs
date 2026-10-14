@@ -1094,6 +1094,7 @@ impl Studio {
             "decoding": self.photos.decoding.len(),
             "blend": self.photos.blend,
             "compare_with_3d": self.photo_compare && self.shown_photo().is_some(),
+            "split_ratio": self.photo_split_ratio,
             "cached": self.photos.cache.len(),
             "cached_bytes": self.photos.cache.iter().map(|photo| photo.bytes()).sum::<usize>(),
             "view": view,
@@ -2169,6 +2170,21 @@ mod tests {
             )["enabled"],
             true
         );
+        let ratio = send(
+            &mut studio,
+            json!({"command": "set_photo_split", "ratio": 0.65}),
+        )["ratio"]
+            .as_f64()
+            .unwrap();
+        assert!((ratio - 0.65).abs() < 1e-5);
+        assert_eq!(
+            send(
+                &mut studio,
+                json!({"command": "set_photo_split", "ratio": 0.9})
+            )["ok"],
+            false
+        );
+        assert_eq!(studio.photo_split_ratio, 0.65);
         let model = studio
             .compare_model_viewport(studio.point_viewport())
             .expect("the 3D model has a saved camera");
@@ -2220,6 +2236,57 @@ mod tests {
             )["enabled"],
             false
         );
+    }
+
+    #[test]
+    fn photo_compare_divider_drags_only_near_its_line() {
+        use iced::widget::canvas::Program;
+        use iced::{event, mouse, Rectangle};
+
+        let divider = crate::CompareDivider { ratio: 0.5 };
+        let bounds = Rectangle::new(UiPoint::ORIGIN, Size::new(800.0, 600.0));
+        let mut dragging = false;
+        let press = canvas::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left));
+        assert_eq!(
+            divider
+                .update(
+                    &mut dragging,
+                    press.clone(),
+                    bounds,
+                    mouse::Cursor::Available(UiPoint::new(100.0, 300.0))
+                )
+                .0,
+            event::Status::Ignored
+        );
+        assert!(!dragging);
+        assert_eq!(
+            divider
+                .update(
+                    &mut dragging,
+                    press,
+                    bounds,
+                    mouse::Cursor::Available(UiPoint::new(400.0, 300.0))
+                )
+                .0,
+            event::Status::Captured
+        );
+        assert!(dragging);
+        let (_, moved) = divider.update(
+            &mut dragging,
+            canvas::Event::Mouse(mouse::Event::CursorMoved {
+                position: UiPoint::new(600.0, 300.0),
+            }),
+            bounds,
+            mouse::Cursor::Available(UiPoint::new(600.0, 300.0)),
+        );
+        assert!(matches!(moved, Some(Message::PhotoSplitRatio(ratio)) if ratio == 0.75));
+        let _ = divider.update(
+            &mut dragging,
+            canvas::Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)),
+            bounds,
+            mouse::Cursor::Available(UiPoint::new(600.0, 300.0)),
+        );
+        assert!(!dragging);
     }
 
     #[test]
