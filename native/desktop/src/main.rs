@@ -2955,7 +2955,13 @@ impl Studio {
             return true;
         }
         match mode {
-            ColorMode::Rgb => visible.clone().any(|entry| entry.cloud.has_rgb),
+            ColorMode::Rgb => visible.clone().any(|entry| {
+                entry.cloud.has_rgb
+                    || entry
+                        .colours
+                        .as_ref()
+                        .is_some_and(|colours| !colours.is_empty())
+            }),
             ColorMode::Elevation => true,
             ColorMode::Intensity => visible.clone().any(|entry| entry.cloud.has_intensity),
             ColorMode::Classification => visible.any(|entry| entry.cloud.has_classification),
