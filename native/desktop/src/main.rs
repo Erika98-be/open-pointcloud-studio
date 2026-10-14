@@ -2015,6 +2015,7 @@ enum Message {
     Photos(file_photos::PhotoAction),
     TogglePhotoCompare,
     PhotoSplitRatio(f32),
+    PhotoSplitFinished,
     CompareModel(view_tabs::CompareAction),
     Budget(u32),
     FilterClass(u8, bool),
@@ -2839,8 +2840,8 @@ impl Default for Studio {
             walk_station: None,
             panorama_photos: None,
             photos: file_photos::PhotoTool::default(),
-            photo_compare: false,
-            photo_split_ratio: 0.5,
+            photo_compare: settings.photo_compare,
+            photo_split_ratio: settings.photo_split_ratio,
             walk_keys: [false; 6],
             walk_fast: false,
             walk_tick: None,
@@ -3017,6 +3018,8 @@ impl Studio {
             browser_collapsed: self.browser.collapsed().to_vec(),
             view_tabs: self.tabs.kept().0.clone(),
             view_tab: self.tabs.kept().1.clone(),
+            photo_compare: self.photo_compare,
+            photo_split_ratio: self.photo_split_ratio,
         }
     }
 
@@ -4233,7 +4236,10 @@ impl Studio {
                 } else {
                     self.photo_compare = enabled;
                     self.revision += 1;
-                    (json!({"ok": true, "enabled": enabled}), Task::none())
+                    (
+                        json!({"ok": true, "enabled": enabled}),
+                        self.queue_preferences_save(),
+                    )
                 }
             }
             ApiCommand::SetPhotoSplit { ratio } => {
@@ -4245,7 +4251,10 @@ impl Studio {
                 } else {
                     self.photo_split_ratio = ratio;
                     self.revision += 1;
-                    (json!({"ok": true, "ratio": ratio}), Task::none())
+                    (
+                        json!({"ok": true, "ratio": ratio}),
+                        self.queue_preferences_save(),
+                    )
                 }
             }
             ApiCommand::ZoomAll => {
@@ -8969,11 +8978,13 @@ impl Studio {
             Message::TogglePhotoCompare => {
                 self.photo_compare = !self.photo_compare;
                 self.revision += 1;
+                return self.queue_preferences_save();
             }
             Message::PhotoSplitRatio(ratio) => {
                 self.photo_split_ratio = ratio.clamp(0.25, 0.75);
                 self.revision += 1;
             }
+            Message::PhotoSplitFinished => return self.queue_preferences_save(),
             Message::CompareModel(action) => self.update_compare_model(action),
             Message::Sheet(action) => return self.update_sheet_dialog(action),
             Message::ShowContextMenu(point) => self.context_menu = Some(point),
@@ -13596,7 +13607,7 @@ impl canvas::Program<Message> for CompareDivider {
                 if *dragging =>
             {
                 *dragging = false;
-                (event::Status::Captured, None)
+                (event::Status::Captured, Some(Message::PhotoSplitFinished))
             }
             canvas::Event::Mouse(mouse::Event::CursorMoved { .. }) if *dragging => {
                 let Some(position) = cursor.position_from(bounds.position()) else {
