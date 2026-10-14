@@ -1971,6 +1971,8 @@ enum Message {
     ExportMesh,
     MeshExportPathChosen(mesh_export::MeshExportRequest, Option<PathBuf>),
     TextureMesh,
+    TextureTexelSize(String),
+    TextureMaxResolution(String),
     TexturePoll,
     CancelTextureExport,
     TexturePathChosen(mesh_export::MeshExportRequest, Option<PathBuf>),
@@ -2269,6 +2271,8 @@ struct Studio {
     section_export_pending: bool,
     mesh_export_pending: bool,
     texture_export: Option<Arc<mesh_export::TextureExportControl>>,
+    texture_texel_size: String,
+    texture_max_resolution: String,
     mesh_dialog_pending: bool,
     mesh_job: Option<MeshJob>,
     merge_job: Option<MergeJob>,
@@ -2922,6 +2926,8 @@ impl Default for Studio {
             section_export_pending: false,
             mesh_export_pending: false,
             texture_export: None,
+            texture_texel_size: "0.02".into(),
+            texture_max_resolution: "4096".into(),
             mesh_dialog_pending: false,
             mesh_job: None,
             merge_job: None,
@@ -7239,6 +7245,8 @@ impl Studio {
                 return self.mesh_export_path_chosen(request, path);
             }
             Message::TextureMesh => return self.export_texture_mesh(),
+            Message::TextureTexelSize(value) => self.texture_texel_size = value,
+            Message::TextureMaxResolution(value) => self.texture_max_resolution = value,
             Message::TexturePoll => return self.texture_poll(),
             Message::CancelTextureExport => {
                 self.cancel_texture_export();

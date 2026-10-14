@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 
-use iced::widget::{button, column, container, text};
+use iced::widget::{button, column, container, row, text};
 use iced::{Element, Fill, Task};
 use pointcloud_core::{
     AtlasOptions, AtlasReport, LoadError, MeshFormat, MeshGeometry, MeshTopology,
@@ -332,6 +332,30 @@ pub(crate) fn convert_file(source: &Path, destination: &Path) -> Result<String, 
 }
 
 impl Studio {
+    fn texture_options(&self) -> Result<AtlasOptions, &'static str> {
+        let texel_size = self
+            .texture_texel_size
+            .trim()
+            .replace(',', ".")
+            .parse::<f64>()
+            .map_err(|_| "Enter a positive texel size in metres")?;
+        let max_resolution = self
+            .texture_max_resolution
+            .trim()
+            .parse::<u32>()
+            .map_err(|_| "Enter an atlas resolution from 256 to 4096 pixels")?;
+        if !texel_size.is_finite() || texel_size <= 0.0 {
+            return Err("Enter a positive texel size in metres");
+        }
+        if !(256..=4096).contains(&max_resolution) {
+            return Err("Enter an atlas resolution from 256 to 4096 pixels");
+        }
+        Ok(AtlasOptions {
+            texel_size,
+            max_resolution,
+        })
+    }
+
     /// Save measured mesh colours as an OBJ, MTL and PNG atlas.
     pub(crate) fn export_texture_mesh(&mut self) -> Task<Message> {
         if self.mesh_export_pending {
@@ -343,6 +367,10 @@ impl Studio {
         };
         if request.mesh.colors.is_none() {
             self.status = "This mesh has no measured colours to texture".into();
+            return Task::none();
+        }
+        if let Err(error) = self.texture_options() {
+            self.status = error.into();
             return Task::none();
         }
         let stem = request
@@ -386,7 +414,15 @@ impl Studio {
             self.status = "Choose a new .obj name, different from the source".into();
             return Task::none();
         }
-        self.start_texture_export(request, path, AtlasOptions::default(), None)
+        let options = match self.texture_options() {
+            Ok(options) => options,
+            Err(error) => {
+                self.mesh_export_pending = false;
+                self.status = error.into();
+                return Task::none();
+            }
+        };
+        self.start_texture_export(request, path, options, None)
     }
 
     fn start_texture_export(
@@ -757,20 +793,42 @@ impl Studio {
                 .padding([4, 8]),
             );
         }
+        let texture_settings = column![
+            row![
+                text(tr("Texel (m)")).size(11).width(100),
+                ui_style::text_input("0.02", &self.texture_texel_size)
+                    .on_input(Message::TextureTexelSize)
+                    .width(Fill),
+            ]
+            .spacing(4)
+            .align_y(iced::Alignment::Center),
+            row![
+                text(tr("Atlas (px)")).size(11).width(100),
+                ui_style::text_input("4096", &self.texture_max_resolution)
+                    .on_input(Message::TextureMaxResolution)
+                    .width(Fill),
+            ]
+            .spacing(4)
+            .align_y(iced::Alignment::Center),
+        ]
+        .spacing(3);
         let actions = iced::widget::row![
             button(tr("Export mesh…"))
                 .on_press_maybe((!self.mesh_export_pending).then_some(Message::ExportMesh))
                 .style(ui_style::tool),
             button(tr("Texture surface…"))
                 .on_press_maybe(
-                    (!self.mesh_export_pending && mesh.colors.is_some())
-                        .then_some(Message::TextureMesh)
+                    (!self.mesh_export_pending
+                        && mesh.colors.is_some()
+                        && self.texture_options().is_ok())
+                    .then_some(Message::TextureMesh)
                 )
                 .style(ui_style::tool),
         ]
         .spacing(6);
         Some(
-            rows.push(container(actions).padding([4, 8]))
+            rows.push(container(texture_settings).padding([4, 8]))
+                .push(container(actions).padding([4, 8]))
                 .push(self.cad_viewer_controls())
                 .into(),
         )
@@ -786,6 +844,26 @@ mod tests {
     use super::*;
     use crate::native_api::{ApiCommand, ApiRequest};
     use crate::{MeshControl, MeshJob, MeshMode};
+
+    #[test]
+    fn gui_texture_settings_accept_metres_and_bound_atlas_memory() {
+        let mut studio = Studio::default();
+        assert_eq!(studio.texture_options(), Ok(AtlasOptions::default()));
+        let _ = studio.update(Message::TextureTexelSize("0,05".into()));
+        let _ = studio.update(Message::TextureMaxResolution("1024".into()));
+        assert_eq!(
+            studio.texture_options(),
+            Ok(AtlasOptions {
+                texel_size: 0.05,
+                max_resolution: 1024,
+            })
+        );
+        let _ = studio.update(Message::TextureTexelSize("0".into()));
+        assert!(studio.texture_options().is_err());
+        let _ = studio.update(Message::TextureTexelSize("0.02".into()));
+        let _ = studio.update(Message::TextureMaxResolution("5000".into()));
+        assert!(studio.texture_options().is_err());
+    }
 
     /// A square of two triangles with a loose triangle beside it: seven open
     /// edges, four around the square and three around the triangle, in two

@@ -1056,5 +1056,7 @@
   "Texture surface…": "Oppervlak textureren…",
   "Cancel texture": "Textureren annuleren",
   "Texture progress": "Textuurvoortgang",
-  "triangles": "driehoeken"
+  "triangles": "driehoeken",
+  "Texel (m)": "Texel (m)",
+  "Atlas (px)": "Atlas (px)"
 }
