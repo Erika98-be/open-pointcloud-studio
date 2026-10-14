@@ -11883,151 +11883,22 @@ enum TitleIcon {
 }
 
 fn title_icon(kind: TitleIcon, size: f32) -> Element<'static, Message> {
-    Canvas::new(TitleGlyph(kind))
+    use openaec_ui::icons::Icon;
+    let canonical = match kind {
+        TitleIcon::Extensions => Icon::Cube,
+        TitleIcon::Settings => Icon::Settings,
+        TitleIcon::OpenFolder | TitleIcon::OpenRecent => Icon::Open,
+        TitleIcon::Save => Icon::Save,
+        TitleIcon::Undo => Icon::Undo,
+        TitleIcon::Redo => Icon::Redo,
+    };
+    svg(svg::Handle::from_memory(canonical.bytes()))
         .width(size)
         .height(size)
+        .style(|theme, _| svg::Style {
+            color: Some(ui_theme::colors(theme).accent),
+        })
         .into()
-}
-
-struct TitleGlyph(TitleIcon);
-
-impl canvas::Program<Message> for TitleGlyph {
-    type State = ();
-
-    fn draw(
-        &self,
-        _state: &Self::State,
-        renderer: &Renderer,
-        _theme: &Theme,
-        bounds: Rectangle,
-        _cursor: mouse::Cursor,
-    ) -> Vec<Geometry> {
-        let mut frame = Frame::new(renderer, bounds.size());
-        frame.scale(bounds.width.min(bounds.height) / 24.0);
-        let white = Color::from_rgb8(250, 250, 249);
-        let amber = Color::from_rgb8(217, 119, 6);
-        let stroke = canvas::Stroke::default().with_color(white).with_width(1.8);
-        let accent = canvas::Stroke::default().with_color(amber).with_width(1.8);
-        let line = |points: &[[f32; 2]]| {
-            canvas::Path::new(|path| {
-                path.move_to(UiPoint::new(points[0][0], points[0][1]));
-                for point in &points[1..] {
-                    path.line_to(UiPoint::new(point[0], point[1]));
-                }
-            })
-        };
-        match self.0 {
-            TitleIcon::Extensions => {
-                frame.stroke(
-                    &line(&[
-                        [3.0, 5.0],
-                        [8.0, 5.0],
-                        [8.0, 3.0],
-                        [10.0, 2.0],
-                        [12.0, 3.0],
-                        [12.0, 5.0],
-                        [18.0, 5.0],
-                        [18.0, 10.0],
-                    ]),
-                    stroke,
-                );
-                frame.stroke(&canvas::Path::circle(UiPoint::new(19.0, 12.0), 2.0), stroke);
-                frame.stroke(
-                    &line(&[
-                        [18.0, 14.0],
-                        [18.0, 19.0],
-                        [13.0, 19.0],
-                        [13.0, 17.0],
-                        [11.0, 16.0],
-                        [9.0, 17.0],
-                        [9.0, 19.0],
-                        [3.0, 19.0],
-                        [3.0, 13.0],
-                        [5.0, 13.0],
-                        [6.0, 11.0],
-                        [5.0, 9.0],
-                        [3.0, 9.0],
-                        [3.0, 5.0],
-                    ]),
-                    stroke,
-                );
-            }
-            TitleIcon::Settings => {
-                frame.stroke(&canvas::Path::circle(UiPoint::new(12.0, 12.0), 7.0), stroke);
-                frame.stroke(&canvas::Path::circle(UiPoint::new(12.0, 12.0), 2.5), stroke);
-                for points in [
-                    [[12.0, 2.0], [12.0, 5.0]],
-                    [[12.0, 19.0], [12.0, 22.0]],
-                    [[2.0, 12.0], [5.0, 12.0]],
-                    [[19.0, 12.0], [22.0, 12.0]],
-                    [[5.0, 5.0], [7.0, 7.0]],
-                    [[17.0, 17.0], [19.0, 19.0]],
-                    [[5.0, 19.0], [7.0, 17.0]],
-                    [[17.0, 7.0], [19.0, 5.0]],
-                ] {
-                    frame.stroke(&line(&points), stroke);
-                }
-            }
-            TitleIcon::OpenFolder | TitleIcon::OpenRecent => {
-                frame.stroke(
-                    &line(&[
-                        [2.0, 7.0],
-                        [2.0, 5.0],
-                        [9.0, 5.0],
-                        [11.0, 7.0],
-                        [21.0, 7.0],
-                        [21.0, 18.0],
-                        [3.0, 18.0],
-                        [2.0, 7.0],
-                    ]),
-                    stroke,
-                );
-                frame.stroke(&line(&[[3.0, 11.0], [21.0, 11.0]]), stroke);
-                if matches!(self.0, TitleIcon::OpenRecent) {
-                    frame.stroke(&line(&[[13.0, 14.0], [18.0, 14.0]]), accent);
-                }
-            }
-            TitleIcon::Save => {
-                frame.stroke(
-                    &line(&[
-                        [4.0, 3.0],
-                        [18.0, 3.0],
-                        [21.0, 6.0],
-                        [21.0, 21.0],
-                        [3.0, 21.0],
-                        [3.0, 3.0],
-                    ]),
-                    stroke,
-                );
-                frame.stroke(
-                    &line(&[[7.0, 3.0], [7.0, 10.0], [17.0, 10.0], [17.0, 3.0]]),
-                    stroke,
-                );
-                frame.stroke(
-                    &line(&[[7.0, 21.0], [7.0, 14.0], [17.0, 14.0], [17.0, 21.0]]),
-                    stroke,
-                );
-            }
-            TitleIcon::Undo | TitleIcon::Redo => {
-                let mirror = matches!(self.0, TitleIcon::Redo);
-                let x = |value: f32| if mirror { 24.0 - value } else { value };
-                frame.stroke(
-                    &line(&[[x(8.0), 8.0], [x(4.0), 12.0], [x(8.0), 16.0]]),
-                    stroke,
-                );
-                frame.stroke(
-                    &line(&[
-                        [x(4.0), 12.0],
-                        [x(15.0), 12.0],
-                        [x(19.0), 15.0],
-                        [x(19.0), 19.0],
-                    ]),
-                    stroke,
-                );
-            }
-        }
-        vec![frame.into_geometry()]
-    }
 }
 
 fn icon_tool_button_when(
