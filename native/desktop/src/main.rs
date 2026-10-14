@@ -2014,6 +2014,7 @@ enum Message {
     /// The photos of a file that are not those of its stations.
     Photos(file_photos::PhotoAction),
     TogglePhotoCompare,
+    CompareModel(view_tabs::CompareAction),
     Budget(u32),
     FilterClass(u8, bool),
     SetSectionEnabled(bool),
@@ -8954,6 +8955,7 @@ impl Studio {
                 self.photo_compare = !self.photo_compare;
                 self.revision += 1;
             }
+            Message::CompareModel(action) => self.update_compare_model(action),
             Message::Sheet(action) => return self.update_sheet_dialog(action),
             Message::ShowContextMenu(point) => self.context_menu = Some(point),
             Message::DismissContextMenu => self.context_menu = None,
@@ -13534,6 +13536,86 @@ fn hover_ring(frame: &mut Frame, center: UiPoint, radius: f32) {
     );
 }
 
+impl PointViewport<'_> {
+    fn update_compare(
+        &self,
+        state: &mut ViewportState,
+        event: canvas::Event,
+        bounds: Rectangle,
+        cursor: mouse::Cursor,
+    ) -> (event::Status, Option<Message>) {
+        use view_tabs::CompareAction;
+        let message = |action| Some(Message::CompareModel(action));
+        match event {
+            canvas::Event::Mouse(mouse::Event::ButtonPressed(button)) if cursor.is_over(bounds) => {
+                let position = cursor.position_in(bounds).expect("cursor is over pane");
+                if button == mouse::Button::Left {
+                    if let Some(target) = view_cube::hit(position, bounds, self.yaw, self.pitch) {
+                        state.drag = None;
+                        return (
+                            event::Status::Captured,
+                            message(CompareAction::Cube(target)),
+                        );
+                    }
+                }
+                let mode = match button {
+                    mouse::Button::Left => DragMode::Orbit,
+                    mouse::Button::Right | mouse::Button::Middle => DragMode::Pan,
+                    _ => return (event::Status::Ignored, None),
+                };
+                state.drag = Some(DragState {
+                    start: position,
+                    position,
+                    mode,
+                });
+                (event::Status::Captured, None)
+            }
+            canvas::Event::Mouse(mouse::Event::ButtonReleased(
+                mouse::Button::Left | mouse::Button::Right | mouse::Button::Middle,
+            )) => {
+                state.drag = None;
+                (event::Status::Captured, None)
+            }
+            canvas::Event::Mouse(mouse::Event::CursorMoved { .. }) => {
+                let Some(drag) = state.drag.as_mut() else {
+                    return (event::Status::Ignored, None);
+                };
+                let Some(position) = cursor.position_from(bounds.position()) else {
+                    return (event::Status::Captured, None);
+                };
+                let (dx, dy) = (position.x - drag.position.x, position.y - drag.position.y);
+                drag.position = position;
+                let action = match drag.mode {
+                    DragMode::Orbit => CompareAction::Orbit(-dx, dy, bounds.size()),
+                    DragMode::Pan => CompareAction::Pan(dx, dy),
+                    _ => return (event::Status::Captured, None),
+                };
+                (event::Status::Captured, message(action))
+            }
+            canvas::Event::Mouse(mouse::Event::WheelScrolled { delta })
+                if cursor.is_over(bounds) =>
+            {
+                let amount = match delta {
+                    mouse::ScrollDelta::Lines { y, .. } => y,
+                    mouse::ScrollDelta::Pixels { y, .. } => y / 40.0,
+                };
+                let position = cursor
+                    .position_in(bounds)
+                    .unwrap_or(UiPoint::new(bounds.width * 0.5, bounds.height * 0.5));
+                (
+                    event::Status::Captured,
+                    message(CompareAction::Zoom(
+                        amount,
+                        [position.x, position.y],
+                        bounds.size(),
+                    )),
+                )
+            }
+            _ => (event::Status::Ignored, None),
+        }
+    }
+}
+
 impl canvas::Program<Message> for PointViewport<'_> {
     type State = ViewportState;
 
@@ -13545,7 +13627,7 @@ impl canvas::Program<Message> for PointViewport<'_> {
         cursor: mouse::Cursor,
     ) -> (event::Status, Option<Message>) {
         if self.read_only {
-            return (event::Status::Ignored, None);
+            return self.update_compare(state, event, bounds, cursor);
         }
         if let canvas::Event::Keyboard(iced::keyboard::Event::ModifiersChanged(modifiers)) = event {
             state.modifiers = modifiers;

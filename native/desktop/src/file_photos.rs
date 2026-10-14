@@ -2176,11 +2176,43 @@ mod tests {
         assert!(!model.photo_visible);
         assert!(model.read_only);
         assert!(studio.point_viewport().photo_visible);
+        let model_camera = (model.yaw, model.pan, model.zoom);
+        let photo_camera = (studio.yaw, studio.pitch, studio.zoom, studio.pan);
+        let _ = studio.update(Message::CompareModel(
+            crate::view_tabs::CompareAction::Orbit(20.0, -10.0, Size::new(450.0, 650.0)),
+        ));
+        let _ = studio.update(Message::CompareModel(crate::view_tabs::CompareAction::Pan(
+            8.0, -4.0,
+        )));
+        let _ = studio.update(Message::CompareModel(
+            crate::view_tabs::CompareAction::Zoom(1.0, [225.0, 325.0], Size::new(450.0, 650.0)),
+        ));
+        assert_eq!(
+            (studio.yaw, studio.pitch, studio.zoom, studio.pan),
+            photo_camera
+        );
+        let moved_model = studio
+            .compare_model_viewport(studio.point_viewport())
+            .expect("the 3D model remains beside the photo");
+        assert_ne!(moved_model.yaw, model_camera.0);
+        assert_ne!(moved_model.pan, model_camera.1);
+        assert_ne!(moved_model.zoom, model_camera.2);
+        let moved_camera = (
+            moved_model.yaw,
+            moved_model.pitch,
+            moved_model.zoom,
+            moved_model.pan,
+        );
         assert_eq!(
             send(&mut studio, json!({"command": "status"}))["result"]["photos"]["compare_with_3d"],
             true
         );
         let _ = studio.view();
+        let _ = studio.show_tab(&crate::view_tabs::TabId::Model).unwrap();
+        assert_eq!(
+            (studio.yaw, studio.pitch, studio.zoom, studio.pan),
+            moved_camera
+        );
         assert_eq!(
             send(
                 &mut studio,
