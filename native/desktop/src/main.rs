@@ -2013,6 +2013,7 @@ enum Message {
     PanoramaReady(PathBuf, usize, Result<Arc<PhotoSet>, String>),
     /// The photos of a file that are not those of its stations.
     Photos(file_photos::PhotoAction),
+    TogglePhotoCompare,
     Budget(u32),
     FilterClass(u8, bool),
     SetSectionEnabled(bool),
@@ -2180,6 +2181,7 @@ struct Studio {
     /// The photos of the open files that are not those of their stations,
     /// and the one that is entered.
     photos: file_photos::PhotoTool,
+    photo_compare: bool,
     /// Movement keys held down, indexed by `WalkKey`, and the faster pace.
     walk_keys: [bool; 6],
     walk_fast: bool,
@@ -2834,6 +2836,7 @@ impl Default for Studio {
             walk_station: None,
             panorama_photos: None,
             photos: file_photos::PhotoTool::default(),
+            photo_compare: false,
             walk_keys: [false; 6],
             walk_fast: false,
             walk_tick: None,
@@ -4217,6 +4220,18 @@ impl Studio {
             | ApiCommand::PhotoBlend { .. }
             | ApiCommand::NextPhoto
             | ApiCommand::PreviousPhoto) => self.api_photos(command),
+            ApiCommand::SetPhotoCompare { enabled } => {
+                if enabled && self.shown_photo().is_none() {
+                    (
+                        json!({"ok": false, "error": "enter an E57 photo first"}),
+                        Task::none(),
+                    )
+                } else {
+                    self.photo_compare = enabled;
+                    self.revision += 1;
+                    (json!({"ok": true, "enabled": enabled}), Task::none())
+                }
+            }
             ApiCommand::ZoomAll => {
                 let task = self.update(Message::ResetCamera);
                 (json!({"ok": true, "camera": self.camera_value()}), task)
@@ -8935,6 +8950,10 @@ impl Studio {
             Message::Browser(action) => return self.update_browser(action),
             Message::Tabs(action) => return self.update_tabs(action),
             Message::Photos(action) => return self.update_photos(action),
+            Message::TogglePhotoCompare => {
+                self.photo_compare = !self.photo_compare;
+                self.revision += 1;
+            }
             Message::Sheet(action) => return self.update_sheet_dialog(action),
             Message::ShowContextMenu(point) => self.context_menu = Some(point),
             Message::DismissContextMenu => self.context_menu = None,
@@ -10857,6 +10876,8 @@ impl Studio {
             shift: self.modifiers.shift(),
             pointer: &self.viewport_pointer,
             photos: &self.photos,
+            photo_visible: true,
+            read_only: false,
             clean: self.views.capturing(),
         }
     }
@@ -11002,12 +11023,22 @@ impl Studio {
         }
         let sheet_canvas = self.layout_canvas();
         let model_visible = sheet_canvas.is_none() && !self.drawing_view.shown;
+        let compare_model = (self.photo_compare
+            && sheet_canvas.is_none()
+            && !self.drawing_view.shown
+            && self.shown_photo().is_some())
+        .then(|| self.compare_model_viewport(self.point_viewport()))
+        .flatten();
+        let photo_compare = compare_model.is_some();
         let canvas = if let Some(sheet) = sheet_canvas {
             stack![sheet].width(Fill).height(Fill)
         } else if self.drawing_view.shown {
             stack![self.drawing_sheet()].width(Fill).height(Fill)
         } else {
-            let point_view = self.point_viewport();
+            let mut point_view = self.point_viewport();
+            if photo_compare {
+                point_view.viewport_size.width *= 0.5;
+            }
             stack![
                 gpu_viewport::GpuViewport {
                     overlay: point_view
@@ -11020,7 +11051,11 @@ impl Studio {
             .width(Fill)
             .height(Fill)
         };
-        let canvas = if self.walk.is_some() && !self.drawing_view.shown && !self.views.capturing() {
+        let canvas = if self.walk.is_some()
+            && !photo_compare
+            && !self.drawing_view.shown
+            && !self.views.capturing()
+        {
             canvas.push(
                 container(
                     button(text(i18n::tr("Back to 3D view (Esc)")).size(12))
@@ -11612,7 +11647,58 @@ impl Studio {
         if let Some(strip) = self.mesh_to_plans_strip() {
             viewport = viewport.push(strip);
         }
-        viewport = viewport.push(container(canvas).width(Fill).height(Fill));
+        if let Some(mut model_view) = compare_model {
+            model_view.viewport_size.width *= 0.5;
+            let model_canvas = stack![
+                gpu_viewport::GpuViewport {
+                    overlay: model_view
+                }
+                .widget()
+                .width(Fill)
+                .height(Fill),
+                Canvas::new(model_view).width(Fill).height(Fill),
+            ]
+            .width(Fill)
+            .height(Fill);
+            let photo_name = self
+                .shown_photo()
+                .and_then(|shown| shown.photo.name.as_deref())
+                .map(str::to_owned)
+                .unwrap_or_else(|| i18n::tr("Photo").to_owned());
+            let header = |label: String| {
+                container(text(label).size(11))
+                    .padding([5, 9])
+                    .width(Fill)
+                    .style(|theme| {
+                        container::Style::default().background(ui_theme::colors(theme).bg_lighter)
+                    })
+            };
+            let panes = row![
+                column![
+                    button(text(i18n::tr("3D model")).size(11))
+                        .on_press(Message::Tabs(view_tabs::TabAction::Show(
+                            view_tabs::TabId::Model,
+                        )))
+                        .style(ui_style::tool)
+                        .width(Fill),
+                    model_canvas,
+                ]
+                .width(iced::Length::FillPortion(1))
+                .height(Fill),
+                container(iced::widget::Space::new(1, Fill))
+                    .style(|theme| container::Style::default()
+                        .background(ui_theme::colors(theme).dialog_input_border))
+                    .width(1),
+                column![header(photo_name), canvas]
+                    .width(iced::Length::FillPortion(1))
+                    .height(Fill),
+            ]
+            .width(Fill)
+            .height(Fill);
+            viewport = viewport.push(container(panes).width(Fill).height(Fill));
+        } else {
+            viewport = viewport.push(container(canvas).width(Fill).height(Fill));
+        }
         if self
             .clouds
             .iter()
@@ -12914,6 +13000,8 @@ struct PointViewport<'a> {
     pointer: &'a std::cell::Cell<Option<[f32; 2]>>,
     /// The photos of the files that are not those of their stations.
     photos: &'a file_photos::PhotoTool,
+    photo_visible: bool,
+    read_only: bool,
     /// A snapshot of the view is being taken: only the scene is drawn,
     /// without the controls of the viewport.
     clean: bool,
@@ -13456,6 +13544,9 @@ impl canvas::Program<Message> for PointViewport<'_> {
         bounds: Rectangle,
         cursor: mouse::Cursor,
     ) -> (event::Status, Option<Message>) {
+        if self.read_only {
+            return (event::Status::Ignored, None);
+        }
         if let canvas::Event::Keyboard(iced::keyboard::Event::ModifiersChanged(modifiers)) = event {
             state.modifiers = modifiers;
             return (event::Status::Ignored, None);

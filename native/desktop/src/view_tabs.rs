@@ -27,7 +27,7 @@ use crate::i18n::tr;
 use crate::project_browser::{ViewKind, ViewRow};
 use crate::station_photos::WalkView;
 use crate::ui_style;
-use crate::{icon_svg, ui_theme, ColorMode, Message, Studio, ToolIcon};
+use crate::{icon_svg, ui_theme, ColorMode, Message, PointViewport, Studio, ToolIcon};
 
 /// A tab, by what it shows.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -767,6 +767,39 @@ impl Studio {
             section_rotation: self.section_rotation,
             color_mode: self.color_mode,
         }
+    }
+
+    /// Capture the exact model camera before a photo replaces the viewport.
+    pub(crate) fn remember_model_for_photo(&mut self) {
+        if self.photos.view.is_none() && self.tabs.owner == TabId::Model {
+            self.tabs.model = Some(self.model_look());
+        }
+    }
+
+    /// A read-only copy of the model camera for the pane beside an entered
+    /// photo. The active photo keeps its own camera and remains interactive.
+    pub(crate) fn compare_model_viewport<'a>(
+        &'a self,
+        mut view: PointViewport<'a>,
+    ) -> Option<PointViewport<'a>> {
+        let look = self.tabs.model?;
+        view.yaw = look.yaw;
+        view.pitch = look.pitch;
+        view.zoom = look.zoom;
+        view.pan = look.pan;
+        view.orbit_point = look.orbit_point;
+        view.walk = look.walk;
+        view.walk_station = None;
+        view.panorama_photos = None;
+        view.color_mode = look.color_mode;
+        view.photo_visible = false;
+        view.read_only = true;
+        view.box_select = false;
+        view.pick_mode = false;
+        view.pan_tool = false;
+        view.drag_rectangle = None;
+        view.context_menu = None;
+        Some(view)
     }
 
     /// Give the 3D model back what it showed: its camera, also standing at

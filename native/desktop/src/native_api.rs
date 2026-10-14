@@ -92,6 +92,9 @@ pub enum ApiCommand {
         /// 0 shows the points only, 1 the photo only.
         value: f32,
     },
+    SetPhotoCompare {
+        enabled: bool,
+    },
     NextPhoto,
     PreviousPhoto,
     ZoomAll,
