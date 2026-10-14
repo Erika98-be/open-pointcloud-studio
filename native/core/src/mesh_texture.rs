@@ -122,8 +122,9 @@ fn write_page(path: &Path, pixels: &[u8], resolution: u32) -> Result<(), LoadErr
 /// The destination must be a new `.obj` name. Existing files are never
 /// replaced, and cancellation or a failed write removes every new file that
 /// was published. The report tells when triangles exceeded the chosen image
-/// resolution. The atlas uses the mesh's stored vertex colours; it does not
-/// project E57 photo pixels or transfer point-colour edits into a mesh.
+/// resolution. The atlas uses the mesh's stored vertex colours; photo-colour
+/// edits must have been applied before that surface was reconstructed. This
+/// writer does not project E57 photo pixels directly onto texels.
 pub fn write_colored_obj_atlas(
     mesh: &MeshGeometry,
     destination: impl AsRef<Path>,
