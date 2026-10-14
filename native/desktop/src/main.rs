@@ -2394,6 +2394,8 @@ struct CloudEntry {
     auto_index_queued: bool,
     index_building: bool,
     detail_points: Option<Arc<[IndexedPoint]>>,
+    /// Last model detail, retained while a photo or the next model view loads.
+    compare_points: Option<Arc<[IndexedPoint]>>,
     /// Points read inside the section box that `detail_points` does not
     /// hold, drawn beside them; see `section_detail`.
     focus_points: Option<Arc<[IndexedPoint]>>,
@@ -2687,6 +2689,37 @@ impl CloudEntry {
         self.detail_points
             .as_ref()
             .map_or(self.cloud.points.len(), |points| points.len())
+    }
+
+    fn resident_len(&self) -> usize {
+        self.compare_points.as_ref().map_or_else(
+            || self.cloud.points.len().min(self.cloud.point_ordinals.len()),
+            |points| points.len(),
+        )
+    }
+
+    fn resident_records(&self) -> Box<dyn Iterator<Item = IndexedPoint> + '_> {
+        let transform = self.transform;
+        let records: Box<dyn Iterator<Item = IndexedPoint> + '_> = if let Some(points) =
+            &self.compare_points
+        {
+            Box::new(
+                points
+                    .iter()
+                    .copied()
+                    .map(move |point| transform.record(point)),
+            )
+        } else {
+            Box::new(
+                self.cloud
+                    .points
+                    .iter()
+                    .copied()
+                    .zip(self.cloud.point_ordinals.iter().copied())
+                    .map(move |(point, ordinal)| transform.record(IndexedPoint { point, ordinal })),
+            )
+        };
+        self.painted(records)
     }
 
     fn view_records(&self) -> Box<dyn Iterator<Item = IndexedPoint> + '_> {
@@ -3156,6 +3189,7 @@ impl Studio {
             picked: false,
             index_building: false,
             detail_points: None,
+            compare_points: None,
             focus_points: None,
         });
         self.import_headers.insert(id, Arc::clone(&header));
@@ -5762,6 +5796,7 @@ impl Studio {
                         picked: false,
                         index_building: false,
                         detail_points: None,
+                        compare_points: None,
                         focus_points: None,
                     });
                     self.revision += 1;
@@ -6838,6 +6873,7 @@ impl Studio {
                         picked: false,
                         index_building: false,
                         detail_points: None,
+                        compare_points: None,
                         focus_points: None,
                     });
                     self.revision += 1;
@@ -10026,7 +10062,11 @@ impl Studio {
         for (index, points) in details {
             count += points.len();
             if let Some(entry) = self.clouds.get_mut(index) {
-                entry.detail_points = Some(points.into());
+                let points: Arc<[IndexedPoint]> = Arc::from(points);
+                if self.photos.view.is_none() && self.tabs.owner == view_tabs::TabId::Model {
+                    entry.compare_points = Some(Arc::clone(&points));
+                }
+                entry.detail_points = Some(points);
             }
         }
         count
@@ -10928,6 +10968,7 @@ impl Studio {
             photos: &self.photos,
             photo_visible: true,
             read_only: false,
+            resident_points: false,
             clean: self.views.capturing(),
         }
     }
@@ -13086,6 +13127,9 @@ struct PointViewport<'a> {
     photos: &'a file_photos::PhotoTool,
     photo_visible: bool,
     read_only: bool,
+    /// Use the bounded resident sample when this camera differs from the
+    /// camera whose octree detail is currently loaded.
+    resident_points: bool,
     /// A snapshot of the view is being taken: only the scene is drawn,
     /// without the controls of the viewport.
     clean: bool,

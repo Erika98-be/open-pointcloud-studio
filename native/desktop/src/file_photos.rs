@@ -1094,6 +1094,12 @@ impl Studio {
             "decoding": self.photos.decoding.len(),
             "blend": self.photos.blend,
             "compare_with_3d": self.photo_compare && self.shown_photo().is_some(),
+            "model_sample": self.shown_photo().is_some().then(||
+                self.clouds.iter().filter(|entry| entry.visible).map(CloudEntry::resident_len).sum::<usize>()
+            ),
+            "model_camera": self.shown_photo().and_then(|_| self.compare_model_viewport(self.point_viewport())).map(|view|
+                json!({"yaw": view.yaw, "pitch": view.pitch, "zoom": view.zoom, "pan": view.pan, "walk": view.walk.is_some()})
+            ),
             "split_ratio": self.photo_split_ratio,
             "split_vertical": self.photo_split_vertical,
             "cached": self.photos.cache.len(),
@@ -2246,10 +2252,11 @@ mod tests {
             moved_model.zoom,
             moved_model.pan,
         );
-        assert_eq!(
-            send(&mut studio, json!({"command": "status"}))["result"]["photos"]["compare_with_3d"],
-            true
-        );
+        let status = send(&mut studio, json!({"command": "status"}));
+        let photos = &status["result"]["photos"];
+        assert_eq!(photos["compare_with_3d"], true);
+        assert!(photos["model_sample"].as_u64().unwrap() > 0);
+        assert_eq!(photos["model_camera"]["zoom"], moved_camera.2);
         let _ = studio.view();
         let _ = studio.show_tab(&crate::view_tabs::TabId::Model).unwrap();
         assert_eq!(

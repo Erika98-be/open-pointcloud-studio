@@ -308,7 +308,7 @@ pub struct ViewTabs {
     pending: Option<TabId>,
     /// The 3D tab whose camera the scene has: the 3D model, or the saved
     /// view shown last.
-    owner: TabId,
+    pub(crate) owner: TabId,
     /// The camera, the section box and the colour mode of the 3D model, as
     /// they were when the scene was last its own.
     model: Option<ModelLook>,
@@ -853,8 +853,16 @@ impl Studio {
 
     /// Capture the exact model camera before a photo replaces the viewport.
     pub(crate) fn remember_model_for_photo(&mut self) {
-        if self.photos.view.is_none() && self.tabs.owner == TabId::Model {
-            self.tabs.model = Some(self.model_look());
+        if self.photos.view.is_none() {
+            if self.tabs.owner == TabId::Model {
+                self.tabs.model = Some(self.model_look());
+            }
+            let model_detail_ready = self.detail_loaded();
+            for entry in &mut self.clouds {
+                if model_detail_ready || entry.compare_points.is_none() {
+                    entry.compare_points = entry.detail_points.clone();
+                }
+            }
         }
     }
 
@@ -876,6 +884,8 @@ impl Studio {
         view.color_mode = look.color_mode;
         view.photo_visible = false;
         view.read_only = true;
+        view.resident_points = true;
+        view.focus_drawn = false;
         view.box_select = false;
         view.pick_mode = false;
         view.pan_tool = false;
