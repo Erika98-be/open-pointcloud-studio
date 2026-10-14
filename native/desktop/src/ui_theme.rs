@@ -70,6 +70,16 @@ impl UiTheme {
         }
     }
 
+    pub fn shared(self) -> openaec_ui::Theme {
+        match self {
+            Self::Light => openaec_ui::Theme::Light,
+            Self::Forge => openaec_ui::Theme::Forge,
+            Self::OpenAec => openaec_ui::Theme::OpenAec,
+            Self::Blueprint => openaec_ui::Theme::Blueprint,
+            Self::Contrast => openaec_ui::Theme::Contrast,
+        }
+    }
+
     /// The background of the theme, which tells the themes apart.
     fn background(self) -> Color {
         match self {
@@ -848,6 +858,15 @@ pub fn colors(theme: &Theme) -> UiColors {
         .find(|variant| variant.background() == background)
         .unwrap_or(UiTheme::Light)
         .colors()
+}
+
+pub fn shared_theme(theme: &Theme) -> openaec_ui::Theme {
+    let background = theme.palette().background;
+    UiTheme::ALL
+        .into_iter()
+        .find(|variant| variant.background() == background)
+        .unwrap_or(UiTheme::Light)
+        .shared()
 }
 
 fn theme_path() -> Option<PathBuf> {

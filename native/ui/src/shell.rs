@@ -180,7 +180,7 @@ pub fn shell<'a, M: Clone + 'a>(
                         .enabled
                         .then(|| Message::Command(command.message.clone())),
                 )
-                .style(move |_, s| widgets::button_style(theme, selected, s));
+                    .style(move |_, s| widgets::ribbon_button_style(theme, selected, s));
                 commands = commands.push(tooltip(
                     control,
                     text(hint).size(12),

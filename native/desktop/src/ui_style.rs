@@ -32,6 +32,7 @@ use crate::Message;
 /// draws buttons and fields that wait at half their strength, and the
 /// buttons of the ribbon remain legible while unavailable.
 const DISABLED: f32 = 0.5;
+#[cfg(test)]
 const RIBBON_DISABLED: f32 = 0.72;
 
 fn colors(theme: &Theme) -> UiColors {
@@ -117,37 +118,7 @@ pub fn secondary(theme: &Theme, status: button::Status) -> button::Style {
 /// transparent with a transparent border, tinted and outlined in the accent
 /// colour under the pointer and while it is on.
 pub fn ribbon_button(theme: &Theme, active: bool, status: button::Status) -> button::Style {
-    let colors = colors(theme);
-    let (background, text_color, border) = if active {
-        (
-            Some(colors.ribbon_btn_active_bg),
-            colors.ribbon_btn_active_text,
-            colors.ribbon_btn_active_border,
-        )
-    } else if hovered(status) {
-        (
-            Some(colors.ribbon_btn_hover),
-            colors.ribbon_text_hover,
-            colors.ribbon_btn_hover_border,
-        )
-    } else {
-        (None, colors.text, Color::TRANSPARENT)
-    };
-    let style = button::Style {
-        background: background.map(Background::Color),
-        text_color,
-        border: Border {
-            color: border,
-            width: 1.0,
-            radius: 2.0.into(),
-        },
-        shadow: Shadow::default(),
-    };
-    if status == button::Status::Disabled {
-        faded(style, RIBBON_DISABLED)
-    } else {
-        style
-    }
+    openaec_ui::widgets::ribbon_button_style(ui_theme::shared_theme(theme), active, status)
 }
 
 /// A small action in a panel or on a row: a ribbon button that is not on.
