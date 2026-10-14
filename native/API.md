@@ -192,9 +192,12 @@ editable geometry with UV coordinates, an MTL and one or more PNG atlas pages
 beside the OBJ. Vertex RGB is also retained as a native-viewport fallback.
 The complete job reports `pages`, `triangles` and
 `resolution_limited`, the number of triangles whose chart could not reach the
-requested texel size on one page. The atlas interpolates only stored mesh
-vertex colours; it does not yet project E57 photo pixels or transfer
-point-colour edits into a mesh. A CAD export such as DWG or DXF
+requested texel size on one page. The atlas interpolates stored mesh
+vertex colours. For a newly reconstructed surface, colours previously applied
+to source points with `colour_from_photos` are carried into sampled mesh
+vertices; an existing mesh must be reconstructed again to receive those
+edits. The atlas does not yet project E57 photo pixels directly onto texels.
+A CAD export such as DWG or DXF
 cannot retain these texture images.
 While the job runs, `job` reports `processed` and `total` triangles.
 `cancel_texture_mesh` requests cancellation; after it completes the job state

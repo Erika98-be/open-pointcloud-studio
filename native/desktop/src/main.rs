@@ -1501,6 +1501,7 @@ struct MeshStart {
     surface_config: SurfaceMeshConfig,
     cloud: Arc<PointCloud>,
     deleted: Option<Arc<DeletionMask>>,
+    colours: Option<Arc<PointColours>>,
     filter: ClassFilter,
     transform: CloudTransform,
     path: PathBuf,
@@ -4991,6 +4992,7 @@ impl Studio {
                     } else if let Some(entry) = active {
                         let cloud = Arc::clone(&entry.cloud);
                         let deleted = entry.deleted.as_ref().map(Arc::clone);
+                        let colours = entry.colours.as_ref().map(Arc::clone);
                         let transform = entry.transform;
                         let id = self.record_api_job(json!({
                             "state": "running", "operation": "mesh", "mode": mode.label(), "path": path
@@ -5000,6 +5002,7 @@ impl Studio {
                             surface_config: config,
                             cloud,
                             deleted,
+                            colours,
                             filter: self.mesh_filter(),
                             transform,
                             path: path.clone(),
@@ -5643,6 +5646,7 @@ impl Studio {
             surface_config,
             cloud,
             deleted,
+            colours,
             filter,
             transform,
             path,
@@ -5674,15 +5678,24 @@ impl Studio {
                             },
                             |progress| control.report(progress),
                         ),
-                        MeshMode::Surface => pointcloud_core::mesh_surface_obj_where_progress(
-                            &cloud,
-                            &path,
-                            surface_config,
-                            |ordinal, point| {
-                                mesh_accepts(ordinal, point, deleted.as_deref(), filter, transform)
-                            },
-                            |progress| control.report(progress),
-                        ),
+                        MeshMode::Surface => {
+                            pointcloud_core::mesh_surface_obj_where_progress_colours(
+                                &cloud,
+                                &path,
+                                surface_config,
+                                colours.as_deref(),
+                                |ordinal, point| {
+                                    mesh_accepts(
+                                        ordinal,
+                                        point,
+                                        deleted.as_deref(),
+                                        filter,
+                                        transform,
+                                    )
+                                },
+                                |progress| control.report(progress),
+                            )
+                        }
                     };
                     result
                         .and_then(|stats| {
@@ -7142,11 +7155,11 @@ impl Studio {
                     self.status = "A mesh task is already running".into();
                     return Task::none();
                 }
-                let Some(transform) = self
+                let Some((transform, colours)) = self
                     .clouds
                     .iter()
                     .find(|entry| Arc::ptr_eq(&entry.cloud, &cloud))
-                    .map(|entry| entry.transform)
+                    .map(|entry| (entry.transform, entry.colours.as_ref().map(Arc::clone)))
                 else {
                     self.status = "Mesh source is no longer open".into();
                     return Task::none();
@@ -7156,6 +7169,7 @@ impl Studio {
                     surface_config: config,
                     cloud,
                     deleted,
+                    colours,
                     filter: self.mesh_filter(),
                     transform,
                     path,
