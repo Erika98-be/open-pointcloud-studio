@@ -21,9 +21,11 @@ use iced::widget::{
     scrollable as scrolling, slider as slide, text, text_input as field, tooltip as tip_widget,
 };
 use iced::{
-    event, mouse, Background, Color, Element, Event, Length, Point, Rectangle, Renderer, Size,
+    event, mouse, Color, Element, Event, Length, Point, Rectangle, Renderer, Size,
     Theme, Vector,
 };
+#[cfg(test)]
+use iced::Background;
 
 use crate::ui_theme::{self, UiColors};
 use crate::Message;
