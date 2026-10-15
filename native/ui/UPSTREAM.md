@@ -11,6 +11,9 @@ each of the five themes, and the shared ribbon-button state styling. Pointcloud 
 drawings, sheets, result categories, shadows, and tooltips. The domain ribbon
 and panels remain in the application while they are migrated to the shared
 shell. Keep the source snapshot and license in sync when updating it.
+The snapshot includes the crate's font license texts and the Apache-2.0
+notice for the source-reviewed Speech microphone icon; the Style Repo's
+`scripts/check_portable_ui.py` verifies these files alongside code and assets.
 
 The desktop now uses the source Tauri shell heights from `openaec_ui::model::metrics`:
 32 px title, 28 px ribbon tabs, 94 px ribbon tools, 30 px document strip and
