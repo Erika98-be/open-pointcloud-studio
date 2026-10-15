@@ -3,7 +3,7 @@
 // Copyright OpenCADStudio contributors. Licensed under GPL-3.0.
 // Changes: adapted the ribbon primitives to iced 0.13 and point-cloud commands.
 
-use iced::widget::{button, column, container, row, text};
+use iced::widget::{button, container};
 use iced::{Background, Element, Fill, Length, Theme};
 
 use crate::{ui_style, ui_theme, Message};
@@ -35,39 +35,12 @@ pub fn quick_access_btn<'a>(
 /// The wider, single-row groups of the approved desktop reference. The
 /// adaptive ribbon still measures and collapses each complete group.
 pub fn render_reference_group<'a>(
+    theme: openaec_ui::Theme,
     title: &'static str,
     width: f32,
     tools: Element<'a, Message>,
 ) -> Element<'a, Message> {
-    let caption = text(crate::i18n::tr(title))
-        .size(12)
-        .font(crate::fonts::MEDIUM)
-        .style(|theme| text::Style {
-            color: Some(ui_theme::colors(theme).ribbon_group_label),
-        });
-    let content = column![
-        container(tools)
-            .width(Fill)
-            .height(64)
-            .center_x(Fill)
-            .align_y(iced::Alignment::Center),
-        container(caption).width(Fill).center_x(Fill),
-    ]
-    .spacing(4)
-    .padding([4, 0])
-    .width(Length::Fixed(width - 1.0))
-    .height(TOOL_BAR_H);
-    row![
-        content,
-        container(text(""))
-            .width(1)
-            .height(80)
-            .style(|theme| container::Style::default()
-                .background(ui_theme::colors(theme).ribbon_group_separator)),
-    ]
-    .align_y(iced::Alignment::Center)
-    .width(Length::Fixed(width))
-    .into()
+    openaec_ui::widgets::ribbon_group(theme, crate::i18n::tr(title), tools, width)
 }
 
 fn title_action_style(theme: &Theme, status: button::Status) -> button::Style {

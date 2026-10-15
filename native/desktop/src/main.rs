@@ -10361,7 +10361,7 @@ impl Studio {
                 id,
                 title,
                 icon_svg(icon, 22.0),
-                opencad_ribbon::render_reference_group(title, width, tools),
+                opencad_ribbon::render_reference_group(self.ui_theme.shared(), title, width, tools),
                 open == Some(id),
             )
         };

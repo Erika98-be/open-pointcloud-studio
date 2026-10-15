@@ -126,6 +126,22 @@ fn document_band_matches_style_book_edges() {
 }
 
 #[test]
+fn ribbon_group_rules_follow_style_book_geometry() {
+    // Ribbon.css at dfdcd41: a 4 px top inset, full-height right rule,
+    // and a caption rule above the 9 px group label.
+    let mut studio = Studio::default();
+    for theme in [UiTheme::Light, UiTheme::Forge] {
+        studio.ui_theme = theme;
+        let picture = crate::test_render::render_window(&studio, iced::Size::new(1280.0, 760.0));
+        let bg = picture.rgb(135, 60);
+        assert_eq!(picture.rgb(135, 63), bg, "{} top inset", theme.key());
+        assert_ne!(picture.rgb(135, 64), bg, "{} separator start", theme.key());
+        assert_eq!(picture.rgb(135, 64), picture.rgb(135, 153), "{} separator height", theme.key());
+        assert_ne!(picture.rgb(20, 133), picture.rgb(20, 132), "{} caption rule", theme.key());
+    }
+}
+
+#[test]
 #[ignore = "regenerate native review images on demand"]
 fn export_harmonized_shell_previews() {
     let folder = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../design");
