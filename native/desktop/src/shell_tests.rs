@@ -201,6 +201,11 @@ fn export_shared_settings_review() {
         studio.settings_action(crate::settings_dialog::SettingsAction::ThemeMenu(true));
         crate::test_render::render_window(&studio, iced::Size::new(1280.0, 800.0))
             .save_png(&folder.join(format!("pointcloud-settings-{name}.png")));
+        if theme == UiTheme::Forge {
+            studio.settings_action(crate::settings_dialog::SettingsAction::ResetPrompt(true));
+            crate::test_render::render_window(&studio, iced::Size::new(1280.0, 800.0))
+                .save_png(&folder.join("pointcloud-settings-reset-forge.png"));
+        }
         studio.settings_action(crate::settings_dialog::SettingsAction::Cancel);
     }
 }

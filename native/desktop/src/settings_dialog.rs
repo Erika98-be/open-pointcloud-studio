@@ -2,7 +2,7 @@
 //! what the application is. A choice shows at once; Cancel puts back what was
 //! in use when the dialog opened and Save keeps it for later sessions.
 
-use iced::widget::{button, column, horizontal_space, row, text};
+use iced::widget::{button, column, horizontal_space, row, stack, text};
 use iced::{Element, Fill};
 
 use crate::i18n::{self, tr, Language};
@@ -24,9 +24,11 @@ pub enum SettingsAction {
     Language(Language),
     Theme(UiTheme),
     ThemeMenu(bool),
+    ResetPrompt(bool),
     Reset,
     Save,
     Cancel,
+    Escape,
 }
 
 /// The dialog while it is open: its tab, and what Cancel goes back to.
@@ -36,6 +38,7 @@ pub struct SettingsDialog {
     language: Language,
     theme: UiTheme,
     theme_menu_open: bool,
+    reset_confirm: bool,
     cad_viewer: String,
 }
 
@@ -99,6 +102,7 @@ impl Studio {
                         language: i18n::choice(),
                         theme: self.ui_theme,
                         theme_menu_open: false,
+                        reset_confirm: false,
                         cad_viewer: self.cad_viewer.input.clone(),
                     });
                 }
@@ -107,10 +111,17 @@ impl Studio {
                 if let Some(dialog) = &mut self.settings {
                     dialog.tab = tab;
                     dialog.theme_menu_open = false;
+                    dialog.reset_confirm = false;
                 }
             }
             SettingsAction::ThemeMenu(open) => {
                 if let Some(dialog) = &mut self.settings { dialog.theme_menu_open = open; }
+            }
+            SettingsAction::ResetPrompt(open) => {
+                if let Some(dialog) = &mut self.settings {
+                    dialog.reset_confirm = open;
+                    if open { dialog.theme_menu_open = false; }
+                }
             }
             SettingsAction::Language(language) => i18n::set(language),
             SettingsAction::Theme(theme) => {
@@ -118,10 +129,13 @@ impl Studio {
                 if let Some(dialog) = &mut self.settings { dialog.theme_menu_open = false; }
             }
             SettingsAction::Reset => {
-                i18n::set(Language::Auto);
-                self.preview_theme(UiTheme::Light);
-                self.cad_viewer.input.clear();
-                self.cad_viewer.refresh();
+                if self.settings.as_ref().is_some_and(|dialog| dialog.reset_confirm) {
+                    i18n::set(Language::Auto);
+                    self.preview_theme(UiTheme::Light);
+                    self.cad_viewer.input.clear();
+                    self.cad_viewer.refresh();
+                    if let Some(dialog) = &mut self.settings { dialog.reset_confirm = false; }
+                }
             }
             SettingsAction::Save => {
                 if self.settings.take().is_some() {
@@ -138,6 +152,13 @@ impl Studio {
                     self.preview_theme(dialog.theme);
                     self.cad_viewer.input = dialog.cad_viewer;
                     self.cad_viewer.refresh();
+                }
+            }
+            SettingsAction::Escape => {
+                if self.settings.as_ref().is_some_and(|dialog| dialog.reset_confirm) {
+                    self.settings_action(SettingsAction::ResetPrompt(false));
+                } else {
+                    self.settings_action(SettingsAction::Cancel);
                 }
             }
         }
@@ -223,7 +244,7 @@ impl Studio {
 
         let footer = row![
             ui_style::secondary_button(tr("Reset to Defaults"))
-                .on_press(send(SettingsAction::Reset)),
+                .on_press(send(SettingsAction::ResetPrompt(true))),
             horizontal_space(),
             ui_style::secondary_button(tr("Cancel")).on_press(send(SettingsAction::Cancel)),
             ui_style::primary_button(tr("Save")).on_press(send(SettingsAction::Save)),
@@ -231,14 +252,30 @@ impl Studio {
         .spacing(8)
         .align_y(iced::Alignment::Center);
 
-        Some(openaec_ui::widgets::settings_modal(
+        let modal = openaec_ui::widgets::settings_modal(
             tr("Settings"),
             sidebar.into(),
             content,
             footer.into(),
             send(SettingsAction::Cancel),
             self.ui_theme.shared(),
-        ))
+        );
+        if dialog.reset_confirm {
+            Some(stack![
+                modal,
+                openaec_ui::widgets::settings_reset_confirmation(
+                    tr("Reset to Defaults"),
+                    tr("Are you sure you want to reset all settings to their default values?"),
+                    tr("Cancel"),
+                    tr("Reset to Defaults"),
+                    send(SettingsAction::ResetPrompt(false)),
+                    send(SettingsAction::Reset),
+                    self.ui_theme.shared(),
+                ),
+            ].width(Fill).height(Fill).into())
+        } else {
+            Some(modal)
+        }
     }
 }
 
@@ -311,5 +348,27 @@ mod tests {
         assert!(!studio.settings.as_ref().unwrap().theme_menu_open);
         studio.settings_action(SettingsAction::Cancel);
         assert_eq!(studio.ui_theme, original);
+    }
+
+    #[test]
+    fn reset_confirmation_stays_above_settings_and_cancel_restores_preview() {
+        let mut studio = Studio::default();
+        studio.ui_theme = UiTheme::Forge;
+        studio.settings_action(SettingsAction::Open);
+        studio.settings_action(SettingsAction::Reset);
+        assert_eq!(studio.ui_theme, UiTheme::Forge);
+        studio.settings_action(SettingsAction::ThemeMenu(true));
+        studio.settings_action(SettingsAction::ResetPrompt(true));
+        assert!(studio.settings.as_ref().unwrap().reset_confirm);
+        assert!(!studio.settings.as_ref().unwrap().theme_menu_open);
+        assert!(studio.settings_view().is_some());
+        studio.settings_action(SettingsAction::Escape);
+        assert!(studio.settings.is_some());
+        assert!(!studio.settings.as_ref().unwrap().reset_confirm);
+        studio.settings_action(SettingsAction::ResetPrompt(true));
+        studio.settings_action(SettingsAction::Reset);
+        assert_eq!(studio.ui_theme, UiTheme::Light);
+        studio.settings_action(SettingsAction::Cancel);
+        assert_eq!(studio.ui_theme, UiTheme::Forge);
     }
 }

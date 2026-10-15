@@ -8981,7 +8981,7 @@ impl Studio {
                     return Task::none();
                 }
                 if self.settings.is_some() {
-                    self.settings_action(settings_dialog::SettingsAction::Cancel);
+                    self.settings_action(settings_dialog::SettingsAction::Escape);
                     return Task::none();
                 }
                 if self.extension_host.dialog.is_some() {

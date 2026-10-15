@@ -37,9 +37,13 @@ The Appearance page also uses `widgets::settings_section_heading` and
 source-colored 14 px swatch rows. Selection previews the theme and closes the
 anchored overlay menu; an outside click closes it without moving the form.
 Cancel still restores the original theme.
+Reset now opens the crate's 340 px `widgets::settings_reset_confirmation`.
+Confirming resets the preview, while Cancel and Escape dismiss the prompt.
+The open theme menu closes before the prompt appears.
 The native software review renderer draws widget overlays as well as the base
 window, so its settings screenshots include the expanded menu.
 The software renders are in `native/design/pointcloud-settings-{light,forge}.png`.
+The second modal is rendered in `native/design/pointcloud-settings-reset-forge.png`.
 Legacy OpenCAD command SVGs with fixed dark strokes are tinted to the shared
 text color on dark themes. They need final per-icon vector harmonization; the
 current tint keeps every command legible during that work.
