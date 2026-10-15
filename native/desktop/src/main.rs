@@ -2982,7 +2982,7 @@ impl Studio {
         } else if self.window_size.is_some_and(|size| size.width >= 1500.0) {
             300.0
         } else {
-            270.0
+            openaec_ui::model::metrics::PANEL_DEFAULT as f32
         }
     }
 
@@ -11556,8 +11556,10 @@ impl Studio {
                                 Message::EyeDomeStrength,
                             )
                             .step(0.1_f32)
-                            .width(155),
-                            text(format!("{:.1}", self.eye_dome_strength)).size(11),
+                            .width(130),
+                            text(format!("{:.1}", self.eye_dome_strength))
+                                .size(11)
+                                .width(28),
                         ]
                         .spacing(5)
                         .align_y(iced::Alignment::Center),

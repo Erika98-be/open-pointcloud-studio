@@ -108,6 +108,16 @@ fn export_harmonized_shell_previews() {
         crate::test_render::render_window(&studio, iced::Size::new(1280.0, 760.0))
             .save_png(&folder.join(format!("pointcloud-shell-{name}.png")));
     }
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("review-scan.xyz");
+    std::fs::write(&path, "0 0 0\n4 0 0\n4 3 0\n0 3 2\n").unwrap();
+    let cloud = Arc::new(pointcloud_core::open(&path, 10).unwrap());
+    let _ = studio.update(Message::Loaded(Ok(cloud)));
+    for (theme, name) in [(UiTheme::Light, "light"), (UiTheme::Forge, "forge")] {
+        studio.ui_theme = theme;
+        crate::test_render::render_window(&studio, iced::Size::new(1280.0, 760.0))
+            .save_png(&folder.join(format!("pointcloud-shell-loaded-{name}.png")));
+    }
 }
 
 #[test]

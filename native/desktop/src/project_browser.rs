@@ -38,7 +38,7 @@ const FOLDER: &str = "folder:";
 /// collapsed folders going first.
 const MAX_COLLAPSED: usize = 64;
 /// The width of the Project Browser.
-pub const WIDTH: f32 = 272.0;
+pub const WIDTH: f32 = openaec_ui::model::metrics::PANEL_DEFAULT as f32;
 
 /// The key of the sub-group of the scans in a folder.
 pub fn folder_key(folder: &Path) -> String {
