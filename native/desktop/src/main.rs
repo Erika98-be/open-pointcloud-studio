@@ -10109,26 +10109,31 @@ impl Studio {
                 title_icon(TitleIcon::OpenFolder, 16.0),
                 "Import point cloud",
                 Some(Message::Open),
+                self.ui_theme.shared(),
             ),
             opencad_ribbon::quick_access_btn(
                 title_icon(TitleIcon::OpenRecent, 16.0),
                 "Open scan folder",
                 Some(Message::OpenFolder),
+                self.ui_theme.shared(),
             ),
             opencad_ribbon::quick_access_btn(
                 title_icon(TitleIcon::Save, 16.0),
                 "Export active point cloud",
                 self.active.map(|_| Message::Export),
+                self.ui_theme.shared(),
             ),
             opencad_ribbon::quick_access_btn(
                 title_icon(TitleIcon::Undo, 16.0),
                 "Undo",
                 (!self.undo_deletions.is_empty()).then_some(Message::UndoDelete),
+                self.ui_theme.shared(),
             ),
             opencad_ribbon::quick_access_btn(
                 title_icon(TitleIcon::Redo, 16.0),
                 "Redo",
                 (!self.redo_deletions.is_empty()).then_some(Message::RedoDelete),
+                self.ui_theme.shared(),
             ),
         ]
         .spacing(0)
@@ -10142,6 +10147,7 @@ impl Studio {
             title_icon(TitleIcon::Settings, 16.0),
             "Settings",
             Some(Message::Settings(settings_dialog::SettingsAction::Open)),
+            self.ui_theme.shared(),
         );
         let logo = svg(svg::Handle::from_memory(
             include_bytes!("../../assets/icons/logo.svg").as_slice(),

@@ -23,6 +23,10 @@ including File view. Pointcloud still owns the commands, adaptive ribbon groups
 and 3D drawing; those domain behaviors are not replaced by the crate's demo shell.
 The software-rendered [Light](../design/pointcloud-shell-light.png) and
 [Forge](../design/pointcloud-shell-forge.png) views are review baselines.
+Quick-access actions on the title strip now use `widgets::title_action` from
+the shared crate for their 30 × 26 px geometry, hover state and tooltip.
+Pointcloud still supplies its actual command, translated label and icon.
+The Light and Forge software renders remain byte-identical after this change.
 Legacy OpenCAD command SVGs with fixed dark strokes are tinted to the shared
 text color on dark themes. They need final per-icon vector harmonization; the
 current tint keeps every command legible during that work.

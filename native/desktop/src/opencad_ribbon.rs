@@ -3,33 +3,23 @@
 // Copyright OpenCADStudio contributors. Licensed under GPL-3.0.
 // Changes: adapted the ribbon primitives to iced 0.13 and point-cloud commands.
 
-use iced::widget::{button, container};
-use iced::{Background, Element, Fill, Length, Theme};
+use iced::widget::button;
+use iced::{Element, Theme};
 
-use crate::{ui_style, ui_theme, Message};
+use crate::{ui_theme, Message};
 
 mod adaptive;
 pub use adaptive::{AdaptivePanel, AdaptiveRibbon};
 
 pub const TOOL_BAR_H: f32 = openaec_ui::model::metrics::RIBBON as f32;
-pub const QUICK_ACCESS_W: f32 = 30.0;
-
 /// Compact quick access actions on the dark title strip.
 pub fn quick_access_btn<'a>(
     icon: Element<'a, Message>,
     label: &'static str,
     message: Option<Message>,
+    theme: openaec_ui::Theme,
 ) -> Element<'a, Message> {
-    let control = button(container(icon).width(Fill).height(Fill).center(Fill))
-        .on_press_maybe(message)
-        .style(title_action_style)
-        .width(Length::Fixed(QUICK_ACCESS_W))
-        .height(26)
-        .padding([1, 0]);
-    // Below the tools of the ribbon, which it would cover.
-    ui_style::ribbon_tooltip(control, crate::i18n::tr(label))
-        .gap(90)
-        .into()
+    openaec_ui::widgets::title_action(icon, crate::i18n::tr(label), message, theme)
 }
 
 /// The wider, single-row groups of the approved desktop reference. The
@@ -41,16 +31,6 @@ pub fn render_reference_group<'a>(
     tools: Element<'a, Message>,
 ) -> Element<'a, Message> {
     openaec_ui::widgets::ribbon_group(theme, crate::i18n::tr(title), tools, width)
-}
-
-fn title_action_style(theme: &Theme, status: button::Status) -> button::Style {
-    let colors = ui_theme::colors(theme);
-    let hovered = matches!(status, button::Status::Hovered);
-    button::Style {
-        background: hovered.then_some(Background::Color(colors.ribbon_btn_hover)),
-        text_color: colors.text,
-        ..button::Style::default()
-    }
 }
 
 /// Shared Tauri-derived tab state for the 28 px tab strip.
