@@ -11411,48 +11411,28 @@ impl Studio {
             properties = properties.push(opencad_properties::section_header("Section box"));
             for (axis, label) in ["X", "Y", "Z"].into_iter().enumerate() {
                 properties = properties
-                    .push(
-                        container(
-                            row![
-                                text(format!(
-                                    "{label} min {:.0}%",
-                                    self.section_min_percent[axis]
-                                ))
-                                .size(10)
-                                .width(78),
-                                ui_style::slider(
-                                    0.0..=100.0,
-                                    self.section_min_percent[axis] as f32,
-                                    move |value| { Message::SectionMin(axis, value) }
-                                )
-                                .width(156),
-                            ]
-                            .spacing(6)
-                            .align_y(iced::Alignment::Center),
+                    .push(openaec_ui::widgets::property_grid_control_with(
+                        format!("{label} min {:.0}%", self.section_min_percent[axis]),
+                        ui_style::slider(
+                            0.0..=100.0,
+                            self.section_min_percent[axis] as f32,
+                            move |value| Message::SectionMin(axis, value),
                         )
-                        .padding([2, 8]),
-                    )
-                    .push(
-                        container(
-                            row![
-                                text(format!(
-                                    "{label} max {:.0}%",
-                                    self.section_max_percent[axis]
-                                ))
-                                .size(10)
-                                .width(78),
-                                ui_style::slider(
-                                    0.0..=100.0,
-                                    self.section_max_percent[axis] as f32,
-                                    move |value| { Message::SectionMax(axis, value) }
-                                )
-                                .width(156),
-                            ]
-                            .spacing(6)
-                            .align_y(iced::Alignment::Center),
+                        .width(Fill)
+                        .into(),
+                        ui_theme::shared_theme,
+                    ))
+                    .push(openaec_ui::widgets::property_grid_control_with(
+                        format!("{label} max {:.0}%", self.section_max_percent[axis]),
+                        ui_style::slider(
+                            0.0..=100.0,
+                            self.section_max_percent[axis] as f32,
+                            move |value| Message::SectionMax(axis, value),
                         )
-                        .padding([2, 8]),
-                    );
+                        .width(Fill)
+                        .into(),
+                        ui_theme::shared_theme,
+                    ));
             }
             properties = properties.push(
                 container(text(i18n::tr("XYZ limits · model coordinates")).size(10))

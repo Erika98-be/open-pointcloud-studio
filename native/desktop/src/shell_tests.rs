@@ -211,6 +211,20 @@ fn export_shared_settings_review() {
 }
 
 #[test]
+#[ignore = "regenerate the section-box property-grid review on demand"]
+fn export_section_box_property_review() {
+    let _language = TestLanguage::hold(Language::English);
+    let folder = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../design");
+    let mut studio = Studio::default();
+    studio.section_enabled = true;
+    for (theme, name) in [(UiTheme::Light, "light"), (UiTheme::Forge, "forge")] {
+        studio.ui_theme = theme;
+        crate::test_render::render_window(&studio, iced::Size::new(1280.0, 1000.0))
+            .save_png(&folder.join(format!("pointcloud-section-box-{name}.png")));
+    }
+}
+
+#[test]
 fn open_theme_menu_paints_its_swatch_above_the_form() {
     let _language = TestLanguage::hold(Language::English);
     let mut studio = Studio::default();
