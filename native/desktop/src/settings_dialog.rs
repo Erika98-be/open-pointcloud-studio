@@ -146,33 +146,9 @@ impl Studio {
 
         let tab = |label: &'static str, tab: SettingsTab| {
             let active = dialog.tab == tab;
-            button(text(tr(label)).size(12).font(crate::fonts::MEDIUM))
-                .on_press(send(SettingsAction::Tab(tab)))
-                .width(Fill)
-                .padding([7, 12])
-                .style(move |theme, status| {
-                    let colors = ui_theme::colors(theme);
-                    let hovered = matches!(status, button::Status::Hovered);
-                    button::Style {
-                        background: (active || hovered).then_some(
-                            if active {
-                                colors.dialog_tab_active_bg
-                            } else {
-                                colors.dialog_tab_hover
-                            }
-                            .into(),
-                        ),
-                        text_color: if active {
-                            colors.dialog_tab_active_text
-                        } else if hovered {
-                            colors.dialog_tab_hover_text
-                        } else {
-                            colors.dialog_tab_text
-                        },
-                        border: Border::default().rounded(4),
-                        ..button::Style::default()
-                    }
-                })
+            openaec_ui::widgets::settings_tab(
+                tr(label), active, send(SettingsAction::Tab(tab)), self.ui_theme.shared(),
+            )
         };
         let sidebar = column![
             tab("General", SettingsTab::General),

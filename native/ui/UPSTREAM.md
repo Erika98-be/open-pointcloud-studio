@@ -30,6 +30,8 @@ The Light and Forge software renders remain byte-identical after this change.
 The settings dialog now uses `widgets::settings_modal` for the pinned Tauri
 template's 560 × 500 px card, 120 px sidebar, header, footer and inert backdrop.
 Pointcloud owns the language, theme, CAD viewer and save/cancel behavior.
+Its General, Appearance and About navigation now uses the crate's square 11 px
+`widgets::settings_tab`, including the shared hover and selected theme tokens.
 The software renders are in `native/design/pointcloud-settings-{light,forge}.png`.
 Legacy OpenCAD command SVGs with fixed dark strokes are tinted to the shared
 text color on dark themes. They need final per-icon vector harmonization; the
