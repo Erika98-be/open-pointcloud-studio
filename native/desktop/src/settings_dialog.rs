@@ -2,12 +2,12 @@
 //! what the application is. A choice shows at once; Cancel puts back what was
 //! in use when the dialog opened and Save keeps it for later sessions.
 
-use iced::widget::{button, column, container, horizontal_space, row, text, Space};
-use iced::{Border, Color, Element, Fill};
+use iced::widget::{button, column, horizontal_space, row, text};
+use iced::{Element, Fill};
 
 use crate::i18n::{self, tr, Language};
 use crate::ui_style;
-use crate::ui_theme::{self, UiColors, UiTheme};
+use crate::ui_theme::{UiColors, UiTheme};
 use crate::{Message, Studio};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -23,6 +23,7 @@ pub enum SettingsAction {
     Tab(SettingsTab),
     Language(Language),
     Theme(UiTheme),
+    ThemeMenu(bool),
     Reset,
     Save,
     Cancel,
@@ -34,6 +35,7 @@ pub struct SettingsDialog {
     tab: SettingsTab,
     language: Language,
     theme: UiTheme,
+    theme_menu_open: bool,
     cad_viewer: String,
 }
 
@@ -96,6 +98,7 @@ impl Studio {
                         tab: SettingsTab::General,
                         language: i18n::choice(),
                         theme: self.ui_theme,
+                        theme_menu_open: false,
                         cad_viewer: self.cad_viewer.input.clone(),
                     });
                 }
@@ -103,10 +106,17 @@ impl Studio {
             SettingsAction::Tab(tab) => {
                 if let Some(dialog) = &mut self.settings {
                     dialog.tab = tab;
+                    dialog.theme_menu_open = false;
                 }
             }
+            SettingsAction::ThemeMenu(open) => {
+                if let Some(dialog) = &mut self.settings { dialog.theme_menu_open = open; }
+            }
             SettingsAction::Language(language) => i18n::set(language),
-            SettingsAction::Theme(theme) => self.preview_theme(theme),
+            SettingsAction::Theme(theme) => {
+                self.preview_theme(theme);
+                if let Some(dialog) = &mut self.settings { dialog.theme_menu_open = false; }
+            }
             SettingsAction::Reset => {
                 i18n::set(Language::Auto);
                 self.preview_theme(UiTheme::Light);
@@ -159,10 +169,7 @@ impl Studio {
         .width(Fill);
 
         let heading = |label: &'static str| {
-            text(tr(label))
-                .size(13)
-                .font(crate::fonts::SEMIBOLD)
-                .color(colors.accent)
+            openaec_ui::widgets::settings_section_heading(tr(label), self.ui_theme.shared())
         };
         let label = |name: &'static str| {
             text(tr(name))
@@ -191,70 +198,25 @@ impl Studio {
             .spacing(14)
             .into(),
             SettingsTab::Appearance => {
-                let mut themes = column![
+                column![
                     heading("Theme"),
-                    text(tr("Choose a color theme for the application."))
-                        .size(11)
-                        .color(colors.dialog_content_secondary),
+                    row![
+                        horizontal_space(),
+                        openaec_ui::widgets::settings_theme_picker(
+                            UiTheme::ALL.into_iter().map(|theme| (
+                                theme.shared(),
+                                tr(&theme.to_string()).to_owned(),
+                                send(SettingsAction::Theme(theme)),
+                            )).collect(),
+                            self.ui_theme.shared(),
+                            self.ui_theme.shared(),
+                            dialog.theme_menu_open,
+                            send(SettingsAction::ThemeMenu(!dialog.theme_menu_open)),
+                        ),
+                    ],
                 ]
-                .spacing(8);
-                for theme in UiTheme::ALL {
-                    let [shell, lighter, accent, ink] = theme.swatches();
-                    let swatch = |color: Color| {
-                        container(Space::new(14, 14)).style(move |_| {
-                            container::Style::default()
-                                .background(color)
-                                .border(Border {
-                                    color: Color::from_rgba8(128, 128, 128, 0.6),
-                                    width: 1.0,
-                                    radius: 2.0.into(),
-                                })
-                        })
-                    };
-                    let chosen = theme == self.ui_theme;
-                    themes = themes.push(
-                        button(
-                            row![
-                                swatch(shell),
-                                swatch(lighter),
-                                swatch(accent),
-                                swatch(ink),
-                                text(tr(&theme.to_string()).to_owned()).size(12),
-                            ]
-                            .spacing(6)
-                            .align_y(iced::Alignment::Center),
-                        )
-                        .on_press(send(SettingsAction::Theme(theme)))
-                        .width(Fill)
-                        .padding([6, 10])
-                        .style(move |theme, status| {
-                            let colors = ui_theme::colors(theme);
-                            let hovered = matches!(status, button::Status::Hovered);
-                            button::Style {
-                                background: (chosen || hovered).then_some(
-                                    if chosen {
-                                        colors.dialog_tab_active_bg
-                                    } else {
-                                        colors.dialog_tab_hover
-                                    }
-                                    .into(),
-                                ),
-                                text_color: colors.dialog_content_text,
-                                border: Border {
-                                    color: if chosen {
-                                        colors.focus
-                                    } else {
-                                        Color::TRANSPARENT
-                                    },
-                                    width: 1.0,
-                                    radius: 4.0.into(),
-                                },
-                                ..button::Style::default()
-                            }
-                        }),
-                    );
-                }
-                themes.into()
+                .spacing(8)
+                .into()
             }
             SettingsTab::About => about(colors).into(),
         };
@@ -333,5 +295,21 @@ mod tests {
         studio.settings_action(SettingsAction::Cancel);
         assert_eq!(i18n::choice(), dutch);
         assert_eq!(tr("Cancel"), "Annuleren");
+    }
+
+    #[test]
+    fn theme_menu_opens_selects_and_closes_without_committing() {
+        let mut studio = Studio::default();
+        let original = studio.ui_theme;
+        let next = UiTheme::ALL.into_iter().find(|theme| *theme != original).unwrap();
+        studio.settings_action(SettingsAction::Open);
+        studio.settings_action(SettingsAction::Tab(SettingsTab::Appearance));
+        studio.settings_action(SettingsAction::ThemeMenu(true));
+        assert!(studio.settings.as_ref().unwrap().theme_menu_open);
+        studio.settings_action(SettingsAction::Theme(next));
+        assert_eq!(studio.ui_theme, next);
+        assert!(!studio.settings.as_ref().unwrap().theme_menu_open);
+        studio.settings_action(SettingsAction::Cancel);
+        assert_eq!(studio.ui_theme, original);
     }
 }

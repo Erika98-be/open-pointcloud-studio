@@ -198,6 +198,7 @@ fn export_shared_settings_review() {
         studio.settings_action(crate::settings_dialog::SettingsAction::Tab(
             crate::settings_dialog::SettingsTab::Appearance,
         ));
+        studio.settings_action(crate::settings_dialog::SettingsAction::ThemeMenu(true));
         crate::test_render::render_window(&studio, iced::Size::new(1280.0, 800.0))
             .save_png(&folder.join(format!("pointcloud-settings-{name}.png")));
         studio.settings_action(crate::settings_dialog::SettingsAction::Cancel);

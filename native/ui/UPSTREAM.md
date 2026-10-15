@@ -32,6 +32,10 @@ template's 560 × 500 px card, 120 px sidebar, header, footer and inert backdrop
 Pointcloud owns the language, theme, CAD viewer and save/cancel behavior.
 Its General, Appearance and About navigation now uses the crate's square 11 px
 `widgets::settings_tab`, including the shared hover and selected theme tokens.
+The Appearance page also uses `widgets::settings_section_heading` and
+`widgets::settings_theme_picker`: the shared 200 px trigger expands the five
+source-colored 14 px swatch rows. Selection previews the theme and closes the
+menu; Cancel still restores the original theme.
 The software renders are in `native/design/pointcloud-settings-{light,forge}.png`.
 Legacy OpenCAD command SVGs with fixed dark strokes are tinted to the shared
 text color on dark themes. They need final per-icon vector harmonization; the

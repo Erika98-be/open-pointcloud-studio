@@ -94,13 +94,7 @@ impl UiTheme {
     /// The four colours the theme choice of the template shows before the
     /// name of a theme (`THEME_OPTIONS` in `SettingsDialog.tsx`).
     pub fn swatches(self) -> [Color; 4] {
-        match self {
-            Self::Light => [hex(0xFAFAF9), hex(0xFFFFFF), hex(0xD97706), hex(0x36363E)],
-            Self::Forge => [hex(0x36363E), hex(0x44444C), hex(0xD97706), hex(0xFAFAF9)],
-            Self::OpenAec => [hex(0x27272A), hex(0x1C1917), hex(0xD97706), hex(0xFAFAF9)],
-            Self::Blueprint => [hex(0x0F1B2D), hex(0x1A2C45), hex(0x60A5FA), hex(0xE0E7FF)],
-            Self::Contrast => [hex(0x000000), hex(0x0A0A0A), hex(0xFFD700), hex(0xFFFFFF)],
-        }
+        self.shared().swatches()
     }
 
     /// The key of the theme in the settings and the API: its name in the
