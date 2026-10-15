@@ -172,44 +172,16 @@ pub fn tip_style(theme: &Theme) -> container::Style {
     openaec_ui::widgets::tooltip_style(ui_theme::shared_theme(theme))
 }
 
-/// The size of a button of a dialog or a form in the style book: 20 pixels
-/// beside the label and 5 above and below, at least 75 wide and 27 high,
-/// the label in 11.
-const BUTTON_PADDING: [u16; 2] = [5, 20];
-const BUTTON_MIN_WIDTH: f32 = 75.0;
-const BUTTON_TEXT: f32 = 11.0;
-/// The line of the label: 27 high with the padding.
-const BUTTON_LINE: f32 = 17.0;
-
-/// A button of a dialog or a form with `label` in the middle, in `style`.
-fn dialog_button<'a>(
-    label: impl text::IntoFragment<'a>,
-    style: fn(&Theme, button::Status) -> button::Style,
-) -> button::Button<'a, Message> {
-    button(
-        iced::widget::column![
-            text(label)
-                .size(BUTTON_TEXT)
-                .font(crate::fonts::REGULAR)
-                .line_height(text::LineHeight::Absolute(BUTTON_LINE.into())),
-            iced::widget::Space::with_width(BUTTON_MIN_WIDTH - 2.0 * f32::from(BUTTON_PADDING[1])),
-        ]
-        .align_x(iced::Alignment::Center),
-    )
-    .padding(BUTTON_PADDING)
-    .style(style)
-}
-
 /// The button that goes on, in the size of the style book: Save, Create,
 /// Next, Add.
 pub fn primary_button<'a>(label: impl text::IntoFragment<'a>) -> button::Button<'a, Message> {
-    dialog_button(label, primary)
+    openaec_ui::widgets::dialog_button(label, primary)
 }
 
 /// Every other button of a dialog or a form, in the size of the style
 /// book: Cancel, Back, Reset.
 pub fn secondary_button<'a>(label: impl text::IntoFragment<'a>) -> button::Button<'a, Message> {
-    dialog_button(label, secondary)
+    openaec_ui::widgets::dialog_button(label, secondary)
 }
 
 /// A text field in the style of the style book.
