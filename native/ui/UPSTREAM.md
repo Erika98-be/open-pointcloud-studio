@@ -57,7 +57,9 @@ The 2D plan/elevation/section dialog now uses the crate's 480 px
 inert overlay. Its form and Create action remain Pointcloud-owned. Light and
 Forge captures are in `native/design/pointcloud-sheet-dialog-{light,forge}.png`.
 The modal header now uses the pinned Style Book's vertical theme gradient,
-and the card uses its theme-specific 0 × 4 px, 16 px-blur shadow.
+and the card uses its theme-specific 0 × 4 px, 16 px-blur shadow. Both
+modal variants now support bounded header dragging and a 90% viewport-height
+cap; tests cover short windows and the close-button exclusion.
 Legacy OpenCAD command SVGs with fixed dark strokes are tinted to the shared
 text color on dark themes. They need final per-icon vector harmonization; the
 current tint keeps every command legible during that work.
