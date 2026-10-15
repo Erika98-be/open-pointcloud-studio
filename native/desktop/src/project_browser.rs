@@ -715,8 +715,7 @@ impl Studio {
 
     /// The panel at the left of the window.
     pub(crate) fn project_panel(&self) -> Element<'_, Message> {
-        let mut panel =
-            column![text(tr("Project Browser")).size(12).font(fonts::SEMIBOLD)].spacing(8);
+        let mut panel = column![].spacing(8);
         panel = panel.push(self.scans_group());
         if let Some(classes) = self.classes_group() {
             panel = panel.push(classes);
@@ -734,7 +733,10 @@ impl Studio {
         } else {
             WIDTH
         };
-        container(ui_style::scrollable(panel.padding(14)).height(Fill))
+        container(column![
+            openaec_ui::widgets::panel_header(tr("Project Browser"), self.ui_theme.shared()),
+            ui_style::scrollable(panel.padding([0, 14])).height(Fill),
+        ])
             .width(width)
             .height(Fill)
             .style(crate::sidebar_style)

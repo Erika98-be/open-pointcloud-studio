@@ -80,6 +80,7 @@ fn status_bar_builds_in_the_model_and_in_the_file_view() {
 fn shared_shell_bands_render_at_tauri_template_heights() {
     use openaec_ui::model::metrics;
     assert_eq!((metrics::TITLE, metrics::TABS, metrics::RIBBON, metrics::DOCUMENTS, metrics::STATUS), (32, 28, 94, 30, 22));
+    assert_eq!(metrics::PANEL_TOOLBAR, 24);
     let mut studio = Studio::default();
     for theme in UiTheme::ALL {
         studio.ui_theme = theme;
@@ -94,6 +95,9 @@ fn shared_shell_bands_render_at_tauri_template_heights() {
         ] {
             assert!(picture.is(2, y, expected), "{} at y={y}", theme.key());
         }
+        let panel_top = (metrics::TITLE + metrics::TABS + metrics::RIBBON + metrics::DOCUMENTS) as u32;
+        assert!(picture.is(100, panel_top + 22, colors.bg_lighter), "{} panel title", theme.key());
+        assert_ne!(picture.rgb(100, panel_top + 23), picture.rgb(100, panel_top + 22), "{} panel divider", theme.key());
     }
 }
 

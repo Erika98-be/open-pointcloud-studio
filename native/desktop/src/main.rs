@@ -11094,9 +11094,7 @@ impl Studio {
             display_name(&entry.cloud.path)
         });
         let mut properties = column![
-            container(text(i18n::tr("Properties")).size(12).font(fonts::SEMIBOLD))
-                .padding([5, 8])
-                .width(Fill),
+            openaec_ui::widgets::panel_header(i18n::tr("Properties"), self.ui_theme.shared()),
             container(text(filename).size(11))
                 .padding([5, 8])
                 .width(Fill)
