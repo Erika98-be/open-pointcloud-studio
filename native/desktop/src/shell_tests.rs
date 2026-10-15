@@ -225,6 +225,25 @@ fn export_section_box_property_review() {
 }
 
 #[test]
+#[ignore = "regenerate shared general-modal review images on demand"]
+fn export_sheet_dialog_review() {
+    let _language = TestLanguage::hold(Language::English);
+    let folder = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../design");
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("review-scan.xyz");
+    std::fs::write(&path, "0 0 0\n4 0 0\n4 3 0\n0 3 2\n").unwrap();
+    let mut studio = Studio::default();
+    let cloud = Arc::new(pointcloud_core::open(&path, 10).unwrap());
+    let _ = studio.update(Message::Loaded(Ok(cloud)));
+    let _ = studio.update_sheet_dialog(crate::sheet_dialog::SheetAction::Open);
+    for (theme, name) in [(UiTheme::Light, "light"), (UiTheme::Forge, "forge")] {
+        studio.ui_theme = theme;
+        crate::test_render::render_window(&studio, iced::Size::new(1280.0, 800.0))
+            .save_png(&folder.join(format!("pointcloud-sheet-dialog-{name}.png")));
+    }
+}
+
+#[test]
 fn open_theme_menu_paints_its_swatch_above_the_form() {
     let _language = TestLanguage::hold(Language::English);
     let mut studio = Studio::default();

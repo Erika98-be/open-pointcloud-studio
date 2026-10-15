@@ -52,6 +52,10 @@ use `widgets::property_grid_control_with`. Pointcloud still owns their values
 and messages; the crate supplies the 28 px rows and aligned label/control
 columns. Native Light and Forge captures are in
 `native/design/pointcloud-section-box-{light,forge}.png`.
+The 2D plan/elevation/section dialog now uses the crate's 480 px
+`widgets::dialog_modal` for its square border, 30 px header, 44 px footer and
+inert overlay. Its form and Create action remain Pointcloud-owned. Light and
+Forge captures are in `native/design/pointcloud-sheet-dialog-{light,forge}.png`.
 Legacy OpenCAD command SVGs with fixed dark strokes are tinted to the shared
 text color on dark themes. They need final per-icon vector harmonization; the
 current tint keeps every command legible during that work.
