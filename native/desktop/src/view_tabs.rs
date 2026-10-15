@@ -891,18 +891,7 @@ impl Studio {
             .id(strip_id())
             .width(Fill);
         let line = row![strip].align_y(iced::Alignment::End);
-        container(line)
-            .padding(Padding {
-                top: 2.0,
-                left: 6.0,
-                ..Padding::ZERO
-            })
-            .width(Fill)
-            .height(openaec_ui::model::metrics::DOCUMENTS)
-            .style(|theme| {
-                container::Style::default().background(ui_theme::colors(theme).docbar_bg)
-            })
-            .into()
+        openaec_ui::frame::document_bar(self.ui_theme.shared(), line.into())
     }
 
     /// One tab: the icon of its kind, its name and its ×, with its full name

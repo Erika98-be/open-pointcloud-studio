@@ -102,6 +102,30 @@ fn shared_shell_bands_render_at_tauri_template_heights() {
 }
 
 #[test]
+fn document_band_matches_style_book_edges() {
+    let mut studio = Studio::default();
+    // Tauri DocumentBar.css at dfdcd41: a 30 px band with an amber 15%
+    // top rule and the theme border over its own document background.
+    for (theme, top, bottom) in [
+        (UiTheme::Light, [241, 226, 208], [222, 222, 222]),
+        (UiTheme::Forge, [72, 57, 47], [89, 64, 42]),
+    ] {
+        studio.ui_theme = theme;
+        let picture = crate::test_render::render_window(&studio, iced::Size::new(1200.0, 700.0));
+        let y = (openaec_ui::model::metrics::TITLE
+            + openaec_ui::model::metrics::TABS
+            + openaec_ui::model::metrics::RIBBON) as u32;
+        assert_eq!(picture.rgb(800, y), top, "{} top", theme.key());
+        assert_eq!(
+            picture.rgb(800, y + openaec_ui::model::metrics::DOCUMENTS as u32 - 1),
+            bottom,
+            "{} bottom",
+            theme.key()
+        );
+    }
+}
+
+#[test]
 #[ignore = "regenerate native review images on demand"]
 fn export_harmonized_shell_previews() {
     let folder = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../design");
