@@ -123,73 +123,18 @@ pub fn status_button(theme: &Theme, status: button::Status) -> button::Style {
 /// colour as its border while it has the focus, and selected text on the
 /// soft accent.
 pub fn input(theme: &Theme, status: field::Status) -> field::Style {
-    let colors = colors(theme);
-    let style = field::Style {
-        background: Background::Color(colors.dialog_input_bg),
-        border: Border {
-            color: if status == field::Status::Focused {
-                colors.focus
-            } else {
-                colors.dialog_input_border
-            },
-            width: 1.0,
-            radius: 0.0.into(),
-        },
-        icon: colors.text_muted,
-        placeholder: colors.text_faint,
-        value: colors.dialog_input_text,
-        selection: colors.accent_soft,
-    };
-    if status == field::Status::Disabled {
-        field::Style {
-            background: style.background.scale_alpha(DISABLED),
-            border: Border {
-                color: style.border.color.scale_alpha(DISABLED),
-                ..style.border
-            },
-            value: style.value.scale_alpha(DISABLED),
-            ..style
-        }
-    } else {
-        style
-    }
+    openaec_ui::widgets::text_input_style(ui_theme::shared_theme(theme), status)
 }
 
 /// A choice list, as the ThemedSelect of the template.
 pub fn select(theme: &Theme, status: choice::Status) -> choice::Style {
-    let colors = colors(theme);
-    choice::Style {
-        text_color: colors.dialog_input_text,
-        placeholder_color: colors.text_faint,
-        handle_color: colors.dialog_input_text.scale_alpha(0.6),
-        background: Background::Color(colors.dialog_input_bg),
-        border: Border {
-            color: match status {
-                choice::Status::Active => colors.dialog_input_border,
-                choice::Status::Hovered => colors.dialog_content_secondary,
-                choice::Status::Opened => colors.focus,
-            },
-            width: 1.0,
-            radius: 0.0.into(),
-        },
-    }
+    openaec_ui::widgets::pick_list_style(ui_theme::shared_theme(theme), status)
 }
 
 /// The open menu of a choice list: the shell under it, the option under the
 /// pointer tinted, with its text in the accent colour.
 pub fn menu(theme: &Theme) -> iced::overlay::menu::Style {
-    let colors = colors(theme);
-    iced::overlay::menu::Style {
-        background: Background::Color(colors.bg),
-        border: Border {
-            color: colors.dialog_input_border,
-            width: 1.0,
-            radius: 0.0.into(),
-        },
-        text_color: colors.dialog_input_text,
-        selected_text_color: colors.accent,
-        selected_background: Background::Color(colors.ribbon_btn_hover),
-    }
+    openaec_ui::widgets::pick_list_menu_style(ui_theme::shared_theme(theme))
 }
 
 /// A checkbox: filled with the accent colour when it is ticked, as the

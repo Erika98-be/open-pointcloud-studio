@@ -360,6 +360,8 @@ fn settings<'a, M: Clone + 'a>(state: &'a ShellState) -> Element<'a, Message<M>>
         pick_list(Theme::ALL, Some(p.theme), |theme| Message::Ui(
             UiEvent::Theme(theme)
         ))
+        .style(move |_, status| widgets::pick_list_style(p.theme, status))
+        .menu_style(move |_| widgets::pick_list_menu_style(p.theme))
         .width(Fill),
         text(l.text("Taal", "Language"))
             .font(fonts::STRONG)
@@ -367,6 +369,8 @@ fn settings<'a, M: Clone + 'a>(state: &'a ShellState) -> Element<'a, Message<M>>
         pick_list(Language::ALL, Some(p.language), |language| Message::Ui(
             UiEvent::Language(language)
         ))
+        .style(move |_, status| widgets::pick_list_style(p.theme, status))
+        .menu_style(move |_| widgets::pick_list_menu_style(p.theme))
         .width(Fill),
         text(format!(
             "{}: {:.0}%",
