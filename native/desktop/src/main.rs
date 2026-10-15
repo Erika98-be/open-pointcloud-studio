@@ -11870,7 +11870,7 @@ enum TitleIcon {
 fn title_icon(kind: TitleIcon, size: f32) -> Element<'static, Message> {
     use openaec_ui::icons::Icon;
     let canonical = match kind {
-        TitleIcon::Extensions => Icon::Cube,
+        TitleIcon::Extensions => Icon::Extensions,
         TitleIcon::Settings => Icon::Settings,
         TitleIcon::OpenFolder | TitleIcon::OpenRecent => Icon::Open,
         TitleIcon::Save => Icon::Save,

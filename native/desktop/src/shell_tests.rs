@@ -122,6 +122,14 @@ fn export_harmonized_shell_previews() {
         crate::test_render::render_window(&studio, iced::Size::new(1280.0, 760.0))
             .save_png(&folder.join(format!("pointcloud-shell-loaded-{name}.png")));
     }
+    let mut extensions = Studio::default();
+    extensions.file_open = true;
+    extensions.file_page = crate::file_view::FilePage::Extensions;
+    for (theme, name) in [(UiTheme::Light, "light"), (UiTheme::Forge, "forge")] {
+        extensions.ui_theme = theme;
+        crate::test_render::render_window(&extensions, iced::Size::new(1280.0, 760.0))
+            .save_png(&folder.join(format!("pointcloud-extensions-{name}.png")));
+    }
 }
 
 #[test]

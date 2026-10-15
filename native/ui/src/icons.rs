@@ -19,13 +19,14 @@ pub enum Icon {
     Measure,
     Fit,
     Cube,
+    Extensions,
     Help,
     Back,
     Check,
     Grid,
 }
 impl Icon {
-    pub const ALL: [Self; 21] = [
+    pub const ALL: [Self; 22] = [
         Self::New,
         Self::Open,
         Self::Save,
@@ -43,11 +44,38 @@ impl Icon {
         Self::Measure,
         Self::Fit,
         Self::Cube,
+        Self::Extensions,
         Self::Help,
         Self::Back,
         Self::Check,
         Self::Grid,
     ];
+    pub fn id(self) -> &'static str {
+        match self {
+            Self::New => "new",
+            Self::Open => "open",
+            Self::Save => "save",
+            Self::Import => "import",
+            Self::Export => "export",
+            Self::Undo => "undo",
+            Self::Redo => "redo",
+            Self::Settings => "settings",
+            Self::Close => "close",
+            Self::Minimize => "minimize",
+            Self::Maximize => "maximize",
+            Self::PanelLeft => "panel-left",
+            Self::PanelRight => "panel-right",
+            Self::Search => "search",
+            Self::Measure => "measure",
+            Self::Fit => "fit",
+            Self::Cube => "cube",
+            Self::Extensions => "extensions",
+            Self::Help => "help",
+            Self::Back => "back",
+            Self::Check => "check",
+            Self::Grid => "grid",
+        }
+    }
     pub fn bytes(self) -> &'static [u8] {
         match self {
             Self::New => include_bytes!("../assets/icons/new.svg"),
@@ -67,6 +95,7 @@ impl Icon {
             Self::Measure => include_bytes!("../assets/icons/measure.svg"),
             Self::Fit => include_bytes!("../assets/icons/fit.svg"),
             Self::Cube => include_bytes!("../assets/icons/cube.svg"),
+            Self::Extensions => include_bytes!("../assets/icons/extensions.svg"),
             Self::Help => include_bytes!("../assets/icons/help.svg"),
             Self::Back => include_bytes!("../assets/icons/back.svg"),
             Self::Check => include_bytes!("../assets/icons/check.svg"),
