@@ -140,30 +140,7 @@ pub fn menu(theme: &Theme) -> iced::overlay::menu::Style {
 /// A checkbox: filled with the accent colour when it is ticked, as the
 /// native checkbox of the template takes the focus colour.
 pub fn check(theme: &Theme, status: check_box::Status) -> check_box::Style {
-    let colors = colors(theme);
-    let (checked, over, disabled) = match status {
-        check_box::Status::Active { is_checked } => (is_checked, false, false),
-        check_box::Status::Hovered { is_checked } => (is_checked, true, false),
-        check_box::Status::Disabled { is_checked } => (is_checked, false, true),
-    };
-    let (background, border) = if checked {
-        (colors.accent, colors.accent)
-    } else if over {
-        (colors.dialog_input_bg, colors.dialog_content_secondary)
-    } else {
-        (colors.dialog_input_bg, colors.dialog_input_border)
-    };
-    let share = if disabled { DISABLED } else { 1.0 };
-    check_box::Style {
-        background: Background::Color(background.scale_alpha(share)),
-        icon_color: colors.btn_primary_text,
-        border: Border {
-            color: border.scale_alpha(share),
-            width: 1.0,
-            radius: 2.0.into(),
-        },
-        text_color: Some(colors.text.scale_alpha(share)),
-    }
+    openaec_ui::widgets::checkbox_style(ui_theme::shared_theme(theme), status)
 }
 
 /// A slider, which the style book does not draw: the rail of its progress
@@ -218,48 +195,13 @@ pub fn progress_line_style(theme: &Theme) -> progress::Style {
 /// A scroll bar: no rail, a thumb in the accent colour at a quarter, at
 /// 40 % under the pointer and while it is dragged.
 pub fn scroll(theme: &Theme, status: scrolling::Status) -> scrolling::Style {
-    let colors = colors(theme);
-    let (horizontal, vertical) = match status {
-        scrolling::Status::Active => (false, false),
-        scrolling::Status::Hovered {
-            is_horizontal_scrollbar_hovered,
-            is_vertical_scrollbar_hovered,
-        } => (
-            is_horizontal_scrollbar_hovered,
-            is_vertical_scrollbar_hovered,
-        ),
-        scrolling::Status::Dragged {
-            is_horizontal_scrollbar_dragged,
-            is_vertical_scrollbar_dragged,
-        } => (
-            is_horizontal_scrollbar_dragged,
-            is_vertical_scrollbar_dragged,
-        ),
-    };
-    let rail = |strong: bool| scrolling::Rail {
-        background: None,
-        border: Border::default(),
-        scroller: scrolling::Scroller {
-            color: colors.accent.scale_alpha(if strong { 0.40 } else { 0.25 }),
-            border: Border::default().rounded(3),
-        },
-    };
-    scrolling::Style {
-        container: container::Style::default(),
-        vertical_rail: rail(vertical),
-        horizontal_rail: rail(horizontal),
-        gap: None,
-    }
+    openaec_ui::widgets::scrollable_style(ui_theme::shared_theme(theme), status)
 }
 
 /// The box of a tooltip: the tooltip of the brand, Deep Forge with
 /// Blueprint White, in every theme.
 pub fn tip_style(theme: &Theme) -> container::Style {
-    let colors = colors(theme);
-    container::Style::default()
-        .background(colors.tooltip_bg)
-        .color(colors.tooltip_text)
-        .border(Border::default().rounded(4))
+    openaec_ui::widgets::tooltip_style(ui_theme::shared_theme(theme))
 }
 
 /// The size of a button of a dialog or a form in the style book: 20 pixels
