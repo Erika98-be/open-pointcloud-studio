@@ -12222,10 +12222,28 @@ fn canonical_icon(icon: ToolIcon) -> Option<openaec_ui::icons::Icon> {
     }
 }
 
+fn domain_icon(icon: ToolIcon) -> Option<openaec_ui::icons::DomainIcon> {
+    use openaec_ui::icons::DomainIcon;
+    match icon {
+        ToolIcon::Building => Some(DomainIcon::PointcloudBagPanel),
+        ToolIcon::Shading => Some(DomainIcon::PointcloudEyeDome),
+        _ => None,
+    }
+}
+
 // Remaining SVG artwork is copied from OpenCADStudio/assets/icons at commit 1fec34d.
 fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
     if let Some(shared) = canonical_icon(icon) {
         return svg(svg::Handle::from_memory(shared.bytes()))
+            .width(size)
+            .height(size)
+            .style(|theme, _| svg::Style {
+                color: Some(ui_theme::colors(theme).text),
+            })
+            .into();
+    }
+    if let Some(shared) = domain_icon(icon) {
+        return svg(svg::Handle::from_memory(shared.bytes(size.round() as u16)))
             .width(size)
             .height(size)
             .style(|theme, _| svg::Style {
@@ -12274,8 +12292,7 @@ fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
         ToolIcon::Scale => include_bytes!("../../assets/opencad-icons/scale.svg"),
         ToolIcon::Decimate => include_bytes!("../../assets/opencad-icons/point.svg"),
         ToolIcon::Mesh => include_bytes!("../../assets/opencad-icons/region.svg"),
-        ToolIcon::Building => include_bytes!("../../assets/opencad-icons/solid.svg"),
-        ToolIcon::Shading => include_bytes!("../../assets/opencad-icons/sphere.svg"),
+        ToolIcon::Building | ToolIcon::Shading => unreachable!("domain icons return above"),
         // The section drawing icon is drawn for this app in the same palette.
         ToolIcon::Drawing => include_bytes!("../../assets/opencad-icons/section_drawing.svg"),
         // So is the closed mesh icon.
