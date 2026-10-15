@@ -291,23 +291,7 @@ impl Studio {
                     .push(separator());
             }
             compact_bar = compact_bar.push(item(&colors, tr("RAM:"), self.memory_usage.label()));
-            return iced::widget::column![
-                container(Space::new(Fill, 1)).style(|theme| {
-                    container::Style::default().background(ui_theme::colors(theme).status_border)
-                }),
-                container(compact_bar)
-                    .padding([0, 8])
-                    .width(Fill)
-                    .height(Length::Fixed(HEIGHT - 1.0))
-                    .style(|theme| {
-                        let colors = ui_theme::colors(theme);
-                        container::Style::default()
-                            .background(colors.status_bg)
-                            .color(colors.status_text)
-                    }),
-            ]
-            .height(Length::Fixed(HEIGHT))
-            .into();
+            return openaec_ui::frame::status_bar(self.ui_theme.shared(), compact_bar.into(), 8);
         }
         // The message comes first and gives way to the totals after it: a
         // long one is cut off at its right instead of wrapping or pushing
@@ -387,23 +371,7 @@ impl Studio {
         .spacing(12)
         .height(Fill)
         .align_y(Alignment::Center);
-        iced::widget::column![
-            container(Space::new(Fill, 1)).style(|theme| {
-                container::Style::default().background(ui_theme::colors(theme).status_border)
-            }),
-            container(bar)
-                .padding([0, 12])
-                .width(Fill)
-                .height(Length::Fixed(HEIGHT - 1.0))
-                .style(|theme| {
-                    let colors = ui_theme::colors(theme);
-                    container::Style::default()
-                        .background(colors.status_bg)
-                        .color(colors.status_text)
-                }),
-        ]
-        .height(Length::Fixed(HEIGHT))
-        .into()
+        openaec_ui::frame::status_bar(self.ui_theme.shared(), bar.into(), 12)
     }
 }
 
