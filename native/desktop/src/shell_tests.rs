@@ -77,6 +77,40 @@ fn status_bar_builds_in_the_model_and_in_the_file_view() {
 }
 
 #[test]
+fn shared_shell_bands_render_at_tauri_template_heights() {
+    use openaec_ui::model::metrics;
+    assert_eq!((metrics::TITLE, metrics::TABS, metrics::RIBBON, metrics::DOCUMENTS, metrics::STATUS), (32, 28, 94, 30, 22));
+    let mut studio = Studio::default();
+    for theme in UiTheme::ALL {
+        studio.ui_theme = theme;
+        let colors = theme.colors();
+        let picture = crate::test_render::render_window(&studio, iced::Size::new(1200.0, 700.0));
+        for (y, expected) in [
+            (16, colors.bg_lighter),
+            (44, colors.bg_lighter),
+            (90, colors.bg),
+            (169, colors.docbar_bg),
+            (690, colors.status_bg),
+        ] {
+            assert!(picture.is(2, y, expected), "{} at y={y}", theme.key());
+        }
+    }
+}
+
+#[test]
+#[ignore = "regenerate native review images on demand"]
+fn export_harmonized_shell_previews() {
+    let folder = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../design");
+    std::fs::create_dir_all(&folder).unwrap();
+    let mut studio = Studio::default();
+    for (theme, name) in [(UiTheme::Light, "light"), (UiTheme::Forge, "forge")] {
+        studio.ui_theme = theme;
+        crate::test_render::render_window(&studio, iced::Size::new(1280.0, 760.0))
+            .save_png(&folder.join(format!("pointcloud-shell-{name}.png")));
+    }
+}
+
+#[test]
 fn keys_leave_the_model_alone_while_the_file_view_covers_it() {
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("scan.xyz");
@@ -292,8 +326,7 @@ fn the_window_is_drawn_in_the_tokens_of_each_theme() {
             theme.key(),
             picture.rgb(500, 750)
         );
-        // The panel at the left follows the theme; the approved ribbon keeps
-        // the same charcoal title strip in every theme.
+        // Panel and title strip both follow the shared theme tokens.
         assert!(
             picture.is(100, 700, colors.bg),
             "{}: the panel is {:?}",
@@ -301,7 +334,7 @@ fn the_window_is_drawn_in_the_tokens_of_each_theme() {
             picture.rgb(100, 700)
         );
         assert!(
-            picture.is(700, 14, iced::Color::from_rgb8(54, 54, 62)),
+            picture.is(700, 14, colors.bg_lighter),
             "{}: the strip is {:?}",
             theme.key(),
             picture.rgb(700, 14)

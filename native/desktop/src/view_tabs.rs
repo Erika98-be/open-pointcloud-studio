@@ -814,17 +814,17 @@ impl Studio {
         }))
     }
 
-    /// The width the strip has for its tabs: that of the
-    /// window between the Project Browser and Properties, else as the main
-    /// area was last drawn.
+    /// The document strip spans the window above all three content regions.
     fn strip_width(&self) -> f32 {
         if let Some(window) = self.window_size {
-            return window.width - crate::project_browser::WIDTH - self.properties_width();
+            return window.width;
         }
         self.drawing_view
             .canvas_bounds()
             .filter(|_| self.drawing_view.shown)
             .map_or_else(|| self.drawn_viewport().width, |bounds| bounds.width)
+            + crate::project_browser::WIDTH
+            + self.properties_width()
     }
 
     /// How the strip lays out: the tabs it lists with their names and
@@ -867,7 +867,7 @@ impl Studio {
         ))
     }
 
-    /// The strip of tabs above the main area.
+    /// The shared 30 px document strip above the explorer, canvas and properties.
     pub(crate) fn tab_strip(&self) -> Element<'_, Message> {
         let shown = self.shown_tab();
         let StripLayout {
@@ -893,11 +893,12 @@ impl Studio {
         let line = row![strip].align_y(iced::Alignment::End);
         container(line)
             .padding(Padding {
-                top: 4.0,
+                top: 2.0,
                 left: 6.0,
                 ..Padding::ZERO
             })
             .width(Fill)
+            .height(openaec_ui::model::metrics::DOCUMENTS)
             .style(|theme| {
                 container::Style::default().background(ui_theme::colors(theme).docbar_bg)
             })

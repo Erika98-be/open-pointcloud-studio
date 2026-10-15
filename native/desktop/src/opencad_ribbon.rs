@@ -4,15 +4,15 @@
 // Changes: adapted the ribbon primitives to iced 0.13 and point-cloud commands.
 
 use iced::widget::{button, column, container, row, text};
-use iced::{Background, Color, Element, Fill, Length, Theme};
+use iced::{Background, Element, Fill, Length, Theme};
 
 use crate::{ui_style, ui_theme, Message};
 
 mod adaptive;
 pub use adaptive::{AdaptivePanel, AdaptiveRibbon};
 
-pub const TOOL_BAR_H: f32 = 114.0;
-pub const QUICK_ACCESS_W: f32 = 40.0;
+pub const TOOL_BAR_H: f32 = openaec_ui::model::metrics::RIBBON as f32;
+pub const QUICK_ACCESS_W: f32 = 30.0;
 
 /// Compact quick access actions on the dark title strip.
 pub fn quick_access_btn<'a>(
@@ -24,7 +24,7 @@ pub fn quick_access_btn<'a>(
         .on_press_maybe(message)
         .style(title_action_style)
         .width(Length::Fixed(QUICK_ACCESS_W))
-        .height(32)
+        .height(26)
         .padding([1, 0]);
     // Below the tools of the ribbon, which it would cover.
     ui_style::ribbon_tooltip(control, crate::i18n::tr(label))
@@ -48,20 +48,20 @@ pub fn render_reference_group<'a>(
     let content = column![
         container(tools)
             .width(Fill)
-            .height(77)
+            .height(64)
             .center_x(Fill)
             .align_y(iced::Alignment::Center),
         container(caption).width(Fill).center_x(Fill),
     ]
     .spacing(4)
-    .padding([7, 0])
+    .padding([4, 0])
     .width(Length::Fixed(width - 1.0))
     .height(TOOL_BAR_H);
     row![
         content,
         container(text(""))
             .width(1)
-            .height(96)
+            .height(80)
             .style(|theme| container::Style::default()
                 .background(ui_theme::colors(theme).ribbon_group_separator)),
     ]
@@ -70,25 +70,29 @@ pub fn render_reference_group<'a>(
     .into()
 }
 
-fn title_action_style(_theme: &Theme, status: button::Status) -> button::Style {
+fn title_action_style(theme: &Theme, status: button::Status) -> button::Style {
+    let colors = ui_theme::colors(theme);
     let hovered = matches!(status, button::Status::Hovered);
     button::Style {
-        background: hovered.then_some(Background::Color(Color::from_rgb8(78, 78, 86))),
-        text_color: Color::from_rgb8(250, 250, 249),
+        background: hovered.then_some(Background::Color(colors.ribbon_btn_hover)),
+        text_color: colors.text,
         ..button::Style::default()
     }
 }
 
-/// Dark title tabs with a separate amber underline on the active tab.
-pub fn tab_style(_theme: &Theme, active: bool, status: button::Status) -> button::Style {
+/// Shared Tauri-derived tab state for the 28 px tab strip.
+pub fn tab_style(theme: &Theme, active: bool, status: button::Status) -> button::Style {
+    let colors = ui_theme::colors(theme);
     let hovered = matches!(status, button::Status::Hovered);
     button::Style {
-        background: hovered.then_some(Background::Color(Color::from_rgb8(78, 78, 86))),
-        text_color: if active || hovered {
-            Color::from_rgb8(250, 250, 249)
+        background: if active {
+            Some(Background::Color(colors.bg))
+        } else if hovered {
+            Some(Background::Color(colors.ribbon_btn_hover))
         } else {
-            Color::from_rgb8(188, 188, 194)
+            None
         },
+        text_color: if active || hovered { colors.accent } else { colors.text },
         ..button::Style::default()
     }
 }

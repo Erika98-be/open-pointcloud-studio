@@ -21,6 +21,19 @@ pub(crate) struct Picture {
 }
 
 impl Picture {
+    /// Save a software-rendered review image without launching a desktop window.
+    pub(crate) fn save_png(&self, path: &std::path::Path) {
+        let size = tiny_skia::IntSize::from_wh(self.width, self.height).expect("valid image size");
+        let mut rgba = self.bytes.clone();
+        for pixel in rgba.chunks_exact_mut(4) {
+            pixel.swap(0, 2); // iced_tiny_skia gives BGRA; PNG encoding expects RGBA.
+        }
+        tiny_skia::Pixmap::from_vec(rgba, size)
+            .expect("valid software-rendered pixels")
+            .save_png(path)
+            .expect("write review image");
+    }
+
     /// The colour of the pixel at `x`, `y`, as red, green and blue.
     pub(crate) fn rgb(&self, x: u32, y: u32) -> [u8; 3] {
         assert!(x < self.width && y < self.height, "({x}, {y}) lies outside");

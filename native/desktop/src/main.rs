@@ -10079,17 +10079,17 @@ impl Studio {
         let compact = self.window_size.is_some_and(|size| size.width < 930.0);
         let file_button = button(
             row![
-                text(i18n::tr("File")).size(16).font(fonts::MEDIUM),
-                text("⌄").size(15),
+                text(i18n::tr("File")).size(12).font(fonts::MEDIUM),
+                text("⌄").size(12),
             ]
-            .spacing(12)
+            .spacing(6)
             .align_y(iced::Alignment::Center),
         )
         .on_press(Message::ToggleFile)
         .style(|theme, status| opencad_ribbon::tab_style(theme, self.file_open, status))
-        .width(if compact { 100 } else { 139 })
-        .height(44)
-        .padding([4, if compact { 9 } else { 19 }]);
+        .width(if compact { 70 } else { 80 })
+        .height(26)
+        .padding([3, 11]);
         let tab_buttons: Vec<Element<'_, Message>> = RibbonTab::CORE
             .into_iter()
             .map(|tab| {
@@ -10104,27 +10104,27 @@ impl Studio {
         let tabs = row(tab_buttons).spacing(1).width(iced::Length::Shrink);
         let quick_access: Element<'_, Message> = row![
             opencad_ribbon::quick_access_btn(
-                title_icon(TitleIcon::OpenFolder, 24.0),
+                title_icon(TitleIcon::OpenFolder, 16.0),
                 "Import point cloud",
                 Some(Message::Open),
             ),
             opencad_ribbon::quick_access_btn(
-                title_icon(TitleIcon::OpenRecent, 24.0),
+                title_icon(TitleIcon::OpenRecent, 16.0),
                 "Open scan folder",
                 Some(Message::OpenFolder),
             ),
             opencad_ribbon::quick_access_btn(
-                title_icon(TitleIcon::Save, 24.0),
+                title_icon(TitleIcon::Save, 16.0),
                 "Export active point cloud",
                 self.active.map(|_| Message::Export),
             ),
             opencad_ribbon::quick_access_btn(
-                title_icon(TitleIcon::Undo, 24.0),
+                title_icon(TitleIcon::Undo, 16.0),
                 "Undo",
                 (!self.undo_deletions.is_empty()).then_some(Message::UndoDelete),
             ),
             opencad_ribbon::quick_access_btn(
-                title_icon(TitleIcon::Redo, 24.0),
+                title_icon(TitleIcon::Redo, 16.0),
                 "Redo",
                 (!self.redo_deletions.is_empty()).then_some(Message::RedoDelete),
             ),
@@ -10136,58 +10136,44 @@ impl Studio {
         } else {
             quick_access
         };
-        let settings_content: Element<'_, Message> = if compact {
-            title_icon(TitleIcon::Settings, 22.0)
-        } else {
-            row![
-                title_icon(TitleIcon::Settings, 22.0),
-                text(i18n::tr("Settings")).size(13)
-            ]
-            .spacing(7)
-            .align_y(iced::Alignment::Center)
-            .into()
-        };
-        let settings_button = button(settings_content)
-            .on_press(Message::Settings(settings_dialog::SettingsAction::Open))
-            .style(|theme, status| opencad_ribbon::tab_style(theme, false, status))
-            .width(if compact { 42 } else { 132 })
-            .height(42)
-            .padding([3, 8]);
+        let settings_button = opencad_ribbon::quick_access_btn(
+            title_icon(TitleIcon::Settings, 16.0),
+            "Settings",
+            Some(Message::Settings(settings_dialog::SettingsAction::Open)),
+        );
         let logo = svg(svg::Handle::from_memory(
             include_bytes!("../../assets/icons/logo.svg").as_slice(),
         ))
-        .width(24)
-        .height(24);
-        let divider = || {
-            container(text(""))
-                .width(1)
-                .height(25)
-                .style(|_| container::Style::default().background(Color::from_rgb8(105, 105, 112)))
-        };
-        let top_strip = container(
+        .width(18)
+        .height(18);
+        let title_strip = container(
             row![
                 container(logo)
-                    .width(if compact { 34 } else { 50 })
+                    .width(30)
                     .align_x(iced::Alignment::Center),
-                file_button,
-                divider(),
-                iced::widget::Space::with_width(if compact { 7 } else { 19 }),
-                tabs,
+                text("Open Pointcloud Studio").font(fonts::MEDIUM).size(12),
                 iced::widget::horizontal_space(),
                 quick_access,
-                divider(),
                 settings_button
             ]
             .width(Fill)
             .align_y(iced::Alignment::Center)
             .spacing(0)
-            .padding([0, 2]),
+            .padding([0, 8]),
         )
         .width(Fill)
-        .height(48)
-        .style(|_| container::Style::default().background(Color::from_rgb8(54, 54, 62)));
+        .height(openaec_ui::model::metrics::TITLE)
+        .style(|theme| container::Style::default()
+            .background(ui_theme::colors(theme).bg_lighter)
+            .color(ui_theme::colors(theme).text));
+        let tab_strip = container(row![file_button, tabs].spacing(2).align_y(iced::Alignment::End))
+            .padding([0, 8])
+            .height(openaec_ui::model::metrics::TABS)
+            .width(Fill)
+            .style(|theme| container::Style::default()
+                .background(ui_theme::colors(theme).bg_lighter));
         if self.file_open {
-            return container(top_strip).width(Fill).style(ribbon_style).into();
+            return column![title_strip, tab_strip].width(Fill).into();
         }
 
         let open = self.ribbon_panel_open;
@@ -10200,12 +10186,8 @@ impl Studio {
                 .into();
         container(
             column![
-                top_strip,
-                container(text(""))
-                    .width(Fill)
-                    .height(1)
-                    .style(|theme| container::Style::default()
-                        .background(ui_theme::colors(theme).border_subtle)),
+                title_strip,
+                tab_strip,
                 tool_strip,
             ]
             .spacing(0),
@@ -10382,7 +10364,7 @@ impl Studio {
         };
         let big = |icon, caption, tooltip, message, on, enabled, width| {
             reference_action(
-                icon_svg(icon, 47.0),
+                icon_svg(icon, 36.0),
                 caption,
                 tooltip,
                 message,
@@ -11586,9 +11568,8 @@ impl Studio {
             properties.into()
         };
 
-        // The tabs of the 3D model and of the views and drawings opened from
-        // VIEWS, with what the main area shows at their right.
-        let mut viewport = column![self.tab_strip()].height(Fill).width(Fill);
+        // View-specific progress and the scene stay within the central area.
+        let mut viewport = column![].height(Fill).width(Fill);
         if let Some(progress) = self.progress_strip() {
             viewport = viewport.push(progress);
         }
@@ -11634,6 +11615,7 @@ impl Studio {
         let mesh_status = self.mesh_job.as_ref().map(MeshJob::progress_text);
         let window = column![
             self.ribbon(),
+            self.tab_strip(),
             content,
             self.status_bar(mesh_status.unwrap_or_else(|| self.status.clone())),
         ]
@@ -11730,24 +11712,24 @@ fn ribbon_title_tab(
     compact: bool,
 ) -> Element<'static, Message> {
     let width = match (compact, label) {
-        (true, "Display") => 100.0,
-        (true, "Extensions") => 120.0,
-        (true, _) => 72.0,
-        (false, "Display") => 118.0,
-        (false, "Extensions") => 145.0,
-        (false, _) => 92.0,
+        (true, "Display") => 82.0,
+        (true, "Extensions") => 100.0,
+        (true, _) => 62.0,
+        (false, "Display") => 94.0,
+        (false, "Extensions") => 118.0,
+        (false, _) => 76.0,
     };
     let label: Element<'static, Message> = if label == "Extensions" {
         row![
-            title_icon(TitleIcon::Extensions, 23.0),
-            text(i18n::tr(label)).size(16).font(fonts::MEDIUM),
+            title_icon(TitleIcon::Extensions, 16.0),
+            text(i18n::tr(label)).size(12).font(fonts::MEDIUM),
         ]
         .spacing(8)
         .align_y(iced::Alignment::Center)
         .into()
     } else {
         text(i18n::tr(label))
-            .size(16)
+            .size(12)
             .font(if active {
                 fonts::SEMIBOLD
             } else {
@@ -11758,14 +11740,13 @@ fn ribbon_title_tab(
             .into()
     };
     column![
-        iced::widget::Space::with_height(7),
         button(container(label).width(Fill).center_x(Fill))
             .on_press(message)
             .style(move |theme, status| opencad_ribbon::tab_style(theme, active, status))
             .width(Fill)
-            .height(37)
-            .padding([5, 6]),
-        container(iced::widget::Space::with_height(4))
+            .height(26)
+            .padding([3, 6]),
+        container(iced::widget::Space::with_height(2))
             .width(Fill)
             .style(move |theme| {
                 container::Style::default().background(if active {
@@ -11794,11 +11775,11 @@ fn reference_action(
     size: ReferenceActionSize,
 ) -> Element<'static, Message> {
     let ReferenceActionSize::Large(width) = size;
-    let icon_size = 51.0;
+    let icon_size = 36.0;
     let face = column![
         container(icon)
             .width(Fill)
-            .height(icon_size + 7.0)
+            .height(icon_size + 4.0)
             .center(Fill),
         text(i18n::tr(caption))
             .size(11)
@@ -11812,7 +11793,7 @@ fn reference_action(
             .on_press_maybe(enabled.then_some(message))
             .style(move |theme, status| ui_style::ribbon_button(theme, active, status))
             .width(width)
-            .height(78.0)
+            .height(60.0)
             .padding([2, 1]),
         i18n::tr(tooltip),
     )
@@ -11839,8 +11820,8 @@ fn reference_icon_action_state(
         button(container(icon).width(Fill).height(Fill).center(Fill))
             .on_press_maybe(enabled.then_some(message))
             .style(move |theme, status| ui_style::ribbon_button(theme, active, status))
-            .width(42)
-            .height(36)
+            .width(34)
+            .height(32)
             .padding(1),
         i18n::tr(tooltip),
     )
@@ -12318,6 +12299,15 @@ fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
     svg(svg::Handle::from_memory(bytes))
         .width(size)
         .height(size)
+        .style(|theme, _| {
+            let colors = ui_theme::colors(theme);
+            svg::Style {
+                // Older multicolour OpenCAD assets contain fixed dark strokes.
+                // Tint their complete silhouette on dark shells until each
+                // semantic icon has a reviewed, theme-aware vector.
+                color: (colors.bg != openaec_ui::tokens::LIGHT.bg).then_some(colors.text),
+            }
+        })
         .into()
 }
 

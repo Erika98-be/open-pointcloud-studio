@@ -1161,11 +1161,11 @@ mod tests {
         (
             "--theme-ribbon-group-label",
             [
-                "rgba(54, 54, 62, 0.58)",
-                "rgba(250, 250, 249, 0.58)",
-                "rgba(250, 250, 249, 0.58)",
-                "rgba(224, 231, 255, 0.58)",
-                "#FFFFFF",
+                "rgba(217, 119, 6, 0.8)",
+                "rgba(217, 119, 6, 0.8)",
+                "rgba(217, 119, 6, 0.8)",
+                "rgba(96, 165, 250, 0.85)",
+                "#FFD700",
             ],
         ),
         (
@@ -1178,12 +1178,12 @@ mod tests {
         ),
         (
             "--theme-status-text",
-            ["#F5F5F4", "#A1A1AA", "#A1A1AA", "#9CA3AF", "#FFFFFF"],
+            ["#A1A1AA", "#A1A1AA", "#A1A1AA", "#9CA3AF", "#FFFFFF"],
         ),
         (
             "--theme-status-text-label",
             [
-                "#D4D4D8",
+                "rgba(161, 161, 170, 0.7)",
                 "rgba(161, 161, 170, 0.7)",
                 "rgba(161, 161, 170, 0.7)",
                 "rgba(156, 163, 175, 0.7)",
@@ -1438,6 +1438,25 @@ mod tests {
         Shadow(Shadow),
     }
 
+    fn color_close(left: Color, right: Color) -> bool {
+        [left.r - right.r, left.g - right.g, left.b - right.b, left.a - right.a]
+            .into_iter()
+            .all(|difference| difference.abs() < 0.000001)
+    }
+
+    fn token_close(left: &Token, right: &Token) -> bool {
+        match (left, right) {
+            (Token::Color(a), Token::Color(b)) => color_close(*a, *b),
+            (Token::Shadow(a), Token::Shadow(b)) => {
+                color_close(a.color, b.color)
+                    && (a.offset.x - b.offset.x).abs() < 0.000001
+                    && (a.offset.y - b.offset.y).abs() < 0.000001
+                    && (a.blur_radius - b.blur_radius).abs() < 0.000001
+            }
+            _ => false,
+        }
+    }
+
     /// A colour as CSS writes it: `#RRGGBB` or `rgba(r, g, b, a)`.
     fn css_color(value: &str) -> Color {
         if let Some(digits) = value.strip_prefix('#') {
@@ -1573,11 +1592,12 @@ mod tests {
         for (column, theme) in UiTheme::ALL.into_iter().enumerate() {
             let colors = theme.colors();
             for (variable, values) in TEMPLATE {
-                assert_eq!(
-                    token(&colors, variable),
-                    css_value(values[column]),
-                    "{variable} of {}",
-                    theme.key()
+                let actual = token(&colors, variable);
+                let expected = css_value(values[column]);
+                assert!(
+                    token_close(&actual, &expected),
+                    "{variable} of {}: {actual:?} != {expected:?}",
+                    theme.key(),
                 );
             }
         }

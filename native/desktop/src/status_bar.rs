@@ -1,4 +1,4 @@
-//! The status bar along the bottom of the window: 32
+//! The status bar along the bottom of the window: 22
 //! pixels on the dark status colour, with what is going on and the totals
 //! at the left, the name and the version of the application in the middle
 //! and what the main area shows and the application's resident RAM at the
@@ -22,7 +22,7 @@ use crate::{app_title, fonts, format_count, format_zoom_level, ui_style, ui_them
 use crate::{CloudEntry, Message, Studio};
 
 /// The height of the bar, its line along the top included.
-pub(crate) const HEIGHT: f32 = 32.0;
+pub(crate) const HEIGHT: f32 = openaec_ui::model::metrics::STATUS as f32;
 
 /// The most characters the name of a drawing or a sheet takes at the right.
 const SHOWN_CHARS: usize = 40;
@@ -529,14 +529,14 @@ mod tests {
     }
 
     #[test]
-    fn the_bar_is_32_pixels_of_the_status_colour_under_its_line() {
+    fn the_bar_matches_the_shared_height_under_its_border() {
         let mut studio = Studio::default();
         for theme in UiTheme::ALL {
             studio.ui_theme = theme;
             let colors = theme.colors();
             // At the left edge, in the padding of the bar.
             let (rows, above) = bar_rows(&studio, 4);
-            assert_eq!(rows, 31, "{}", theme.key());
+            assert_eq!(rows, (HEIGHT - 1.0) as u32, "{}", theme.key());
             let [r, g, b, _] = colors.status_border.into_rgba8();
             assert_eq!(above, [r, g, b], "{}", theme.key());
         }

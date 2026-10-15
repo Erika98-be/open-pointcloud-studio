@@ -373,8 +373,9 @@ fn what_views_shows_opens_a_tab_and_a_click_on_a_tab_shows_it_again() {
     studio.viewport_size = Size::new(1400.0, 800.0);
     let wide = studio.strip_layout();
     assert_eq!(wide.fitted, names(&studio), "every name as it is");
-    // Too narrow: the names shrink and the strip scrolls to the tab shown.
-    studio.viewport_size = Size::new(260.0, 300.0);
+    // The document strip spans the whole window; shrink that width to test
+    // truncation rather than only narrowing the central 3D viewport.
+    studio.window_size = Some(Size::new(380.0, 300.0));
     let narrow = studio.strip_layout();
     assert!(narrow.fitted.iter().any(|name| name.ends_with('…')));
     assert!(studio.scroll_to_shown_tab().is_some());
