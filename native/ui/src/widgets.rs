@@ -5,6 +5,82 @@ use iced::{
     Border, Element, Fill,
 };
 
+/// Filled confirmation button used by dialogs and forms in every studio.
+pub fn primary_button_style(theme: Theme, status: button::Status) -> button::Style {
+    let t = theme.tokens();
+    let hovered = matches!(status, button::Status::Hovered | button::Status::Pressed);
+    let style = button::Style {
+        background: Some(
+            if hovered {
+                t.btn_primary_hover_bg
+            } else {
+                t.btn_primary_bg
+            }
+            .into(),
+        ),
+        text_color: if hovered {
+            t.btn_primary_hover_text
+        } else {
+            t.btn_primary_text
+        },
+        border: Border {
+            color: t.btn_primary_border,
+            width: 1.0,
+            radius: 2.0.into(),
+        },
+        ..Default::default()
+    };
+    if status == button::Status::Disabled {
+        faded_button(style, 0.5)
+    } else {
+        style
+    }
+}
+
+/// Neutral companion button used by dialogs and forms in every studio.
+pub fn secondary_button_style(theme: Theme, status: button::Status) -> button::Style {
+    let t = theme.tokens();
+    let hovered = matches!(status, button::Status::Hovered | button::Status::Pressed);
+    let style = button::Style {
+        background: Some(
+            if hovered {
+                t.btn_secondary_hover_bg
+            } else {
+                t.btn_secondary_bg
+            }
+            .into(),
+        ),
+        text_color: t.btn_secondary_text,
+        border: Border {
+            color: if hovered {
+                t.btn_secondary_hover_border
+            } else {
+                t.dialog_input_border
+            },
+            width: 1.0,
+            radius: 2.0.into(),
+        },
+        ..Default::default()
+    };
+    if status == button::Status::Disabled {
+        faded_button(style, 0.5)
+    } else {
+        style
+    }
+}
+
+fn faded_button(style: button::Style, alpha: f32) -> button::Style {
+    button::Style {
+        background: style.background.map(|color| color.scale_alpha(alpha)),
+        text_color: style.text_color.scale_alpha(alpha),
+        border: Border {
+            color: style.border.color.scale_alpha(alpha),
+            ..style.border
+        },
+        ..style
+    }
+}
+
 pub fn button_style(theme: Theme, selected: bool, status: button::Status) -> button::Style {
     let t = theme.tokens();
     let disabled = matches!(status, button::Status::Disabled);
@@ -90,17 +166,28 @@ pub fn surface(theme: Theme) -> container::Style {
 }
 pub fn panel_header<'a, M: 'a>(title: impl Into<String>, theme: Theme) -> Element<'a, M> {
     let t = theme.tokens();
-    let title = container(text(title.into().to_uppercase()).font(fonts::STRONG).size(11))
-        .padding([0, 6])
-        .height(metrics::PANEL_TOOLBAR - 1)
-        .width(Fill)
-        .align_y(iced::Alignment::Center)
-        .style(move |_| container::Style::default().background(t.bg_lighter).color(t.accent));
+    let title = container(
+        text(title.into().to_uppercase())
+            .font(fonts::STRONG)
+            .size(11),
+    )
+    .padding([0, 6])
+    .height(metrics::PANEL_TOOLBAR - 1)
+    .width(Fill)
+    .align_y(iced::Alignment::Center)
+    .style(move |_| {
+        container::Style::default()
+            .background(t.bg_lighter)
+            .color(t.accent)
+    });
     let divider = container(iced::widget::Space::new(Fill, 1))
         .height(1)
         .width(Fill)
         .style(move |_| container::Style::default().background(t.border));
-    column![title, divider].height(metrics::PANEL_TOOLBAR).width(Fill).into()
+    column![title, divider]
+        .height(metrics::PANEL_TOOLBAR)
+        .width(Fill)
+        .into()
 }
 pub fn panel<'a, M: 'a>(
     title: impl Into<String>,

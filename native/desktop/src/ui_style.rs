@@ -62,56 +62,13 @@ fn hovered(status: button::Status) -> bool {
 /// colour, Signal Orange under the pointer. A button is made in it with
 /// [`primary_button`], which gives it its size too.
 pub fn primary(theme: &Theme, status: button::Status) -> button::Style {
-    let colors = colors(theme);
-    let (background, text_color) = if hovered(status) {
-        (colors.btn_primary_hover_bg, colors.btn_primary_hover_text)
-    } else {
-        (colors.btn_primary_bg, colors.btn_primary_text)
-    };
-    let style = button::Style {
-        background: Some(Background::Color(background)),
-        text_color,
-        border: Border {
-            color: colors.btn_primary_border,
-            width: 1.0,
-            radius: 2.0.into(),
-        },
-        shadow: Shadow::default(),
-    };
-    if status == button::Status::Disabled {
-        faded(style, DISABLED)
-    } else {
-        style
-    }
+    openaec_ui::widgets::primary_button_style(ui_theme::shared_theme(theme), status)
 }
 
 /// Every other button of a dialog or a form: Cancel, Back, Reset. A button
 /// is made in it with [`secondary_button`].
 pub fn secondary(theme: &Theme, status: button::Status) -> button::Style {
-    let colors = colors(theme);
-    let (background, border) = if hovered(status) {
-        (
-            colors.btn_secondary_hover_bg,
-            colors.btn_secondary_hover_border,
-        )
-    } else {
-        (colors.btn_secondary_bg, colors.dialog_input_border)
-    };
-    let style = button::Style {
-        background: Some(Background::Color(background)),
-        text_color: colors.btn_secondary_text,
-        border: Border {
-            color: border,
-            width: 1.0,
-            radius: 2.0.into(),
-        },
-        shadow: Shadow::default(),
-    };
-    if status == button::Status::Disabled {
-        faded(style, DISABLED)
-    } else {
-        style
-    }
+    openaec_ui::widgets::secondary_button_style(ui_theme::shared_theme(theme), status)
 }
 
 /// A button of the ribbon, and a small action in a panel drawn as one:
