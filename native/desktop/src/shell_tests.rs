@@ -206,6 +206,23 @@ fn export_shared_settings_review() {
 }
 
 #[test]
+fn open_theme_menu_paints_its_swatch_above_the_form() {
+    let _language = TestLanguage::hold(Language::English);
+    let mut studio = Studio::default();
+    studio.ui_theme = UiTheme::Light;
+    studio.settings_action(crate::settings_dialog::SettingsAction::Open);
+    studio.settings_action(crate::settings_dialog::SettingsAction::Tab(
+        crate::settings_dialog::SettingsTab::Appearance,
+    ));
+    let closed = crate::test_render::render_window(&studio, iced::Size::new(1280.0, 800.0));
+    studio.settings_action(crate::settings_dialog::SettingsAction::ThemeMenu(true));
+    let open = crate::test_render::render_window(&studio, iced::Size::new(1280.0, 800.0));
+    let accent = iced::Color::from_rgb8(0xD9, 0x77, 0x06);
+    assert!(!closed.is(752, 260, accent));
+    assert!(open.is(752, 260, accent));
+}
+
+#[test]
 fn keys_leave_the_model_alone_while_the_file_view_covers_it() {
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("scan.xyz");

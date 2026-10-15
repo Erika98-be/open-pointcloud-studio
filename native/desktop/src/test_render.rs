@@ -7,7 +7,7 @@ use std::sync::Once;
 use iced::advanced::layout::{self, Layout};
 use iced::advanced::renderer;
 use iced::advanced::widget::Tree;
-use iced::{mouse, Color, Element, Rectangle, Size, Theme};
+use iced::{mouse, Color, Element, Rectangle, Size, Theme, Vector};
 
 use crate::{Message, Studio};
 
@@ -77,7 +77,7 @@ pub(crate) fn render(element: Element<'_, Message>, theme: &Theme, size: Size) -
 
 /// As `render`, with the pointer at `cursor`.
 pub(crate) fn render_under(
-    element: Element<'_, Message>,
+    mut element: Element<'_, Message>,
     theme: &Theme,
     size: Size,
     cursor: mouse::Cursor,
@@ -103,6 +103,18 @@ pub(crate) fn render_under(
         cursor,
         &Rectangle::with_size(size),
     );
+    if let Some(mut overlay) = element.as_widget_mut().overlay(
+        &mut tree, Layout::new(&node), &renderer, Vector::ZERO,
+    ) {
+        let popup_node = overlay.layout(&renderer, size);
+        overlay.draw(
+            &mut renderer,
+            theme,
+            &renderer::Style { text_color: theme.palette().text },
+            Layout::new(&popup_node),
+            cursor,
+        );
+    }
     let iced::Renderer::Secondary(mut software) = renderer else {
         unreachable!("the software renderer was made above");
     };

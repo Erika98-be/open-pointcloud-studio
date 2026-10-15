@@ -35,7 +35,10 @@ Its General, Appearance and About navigation now uses the crate's square 11 px
 The Appearance page also uses `widgets::settings_section_heading` and
 `widgets::settings_theme_picker`: the shared 200 px trigger expands the five
 source-colored 14 px swatch rows. Selection previews the theme and closes the
-menu; Cancel still restores the original theme.
+anchored overlay menu; an outside click closes it without moving the form.
+Cancel still restores the original theme.
+The native software review renderer draws widget overlays as well as the base
+window, so its settings screenshots include the expanded menu.
 The software renders are in `native/design/pointcloud-settings-{light,forge}.png`.
 Legacy OpenCAD command SVGs with fixed dark strokes are tinted to the shared
 text color on dark themes. They need final per-icon vector harmonization; the
