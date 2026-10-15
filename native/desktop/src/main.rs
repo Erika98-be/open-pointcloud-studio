@@ -12211,6 +12211,10 @@ fn canonical_icon(icon: ToolIcon) -> Option<openaec_ui::icons::Icon> {
         ToolIcon::Open => Some(Icon::Open),
         ToolIcon::Export => Some(Icon::Export),
         ToolIcon::Fit => Some(Icon::Fit),
+        ToolIcon::FitSelection => Some(Icon::FitSelection),
+        ToolIcon::ZoomIn => Some(Icon::ZoomIn),
+        ToolIcon::ZoomOut => Some(Icon::ZoomOut),
+        ToolIcon::Pan => Some(Icon::Pan),
         ToolIcon::Undo => Some(Icon::Undo),
         ToolIcon::Redo => Some(Icon::Redo),
         ToolIcon::Save => Some(Icon::Save),
@@ -12230,18 +12234,15 @@ fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
             .into();
     }
     let bytes: &'static [u8] = match icon {
-        ToolIcon::Open | ToolIcon::Export | ToolIcon::Fit | ToolIcon::Undo | ToolIcon::Redo
-        | ToolIcon::Save => unreachable!("canonical icons return above"),
+        ToolIcon::Open | ToolIcon::Export | ToolIcon::Fit | ToolIcon::FitSelection
+        | ToolIcon::ZoomIn | ToolIcon::ZoomOut | ToolIcon::Pan | ToolIcon::Undo
+        | ToolIcon::Redo | ToolIcon::Save => unreachable!("canonical icons return above"),
         // The scan-folder and section-box icons are drawn for this app in the
         // same palette.
         ToolIcon::OpenFolder => include_bytes!("../../assets/opencad-icons/folder_scans.svg"),
         ToolIcon::SelectionExport => {
             include_bytes!("../../assets/opencad-icons/selection_export.svg")
         }
-        ToolIcon::ZoomIn => include_bytes!("../../assets/opencad-icons/zoom_in.svg"),
-        ToolIcon::ZoomOut => include_bytes!("../../assets/opencad-icons/zoom_out.svg"),
-        ToolIcon::Pan => include_bytes!("../../assets/opencad-icons/pan.svg"),
-        ToolIcon::FitSelection => include_bytes!("../../assets/opencad-icons/fit_selection.svg"),
         ToolIcon::Cloud => include_bytes!("../../assets/opencad-icons/revcloud.svg"),
         ToolIcon::Select => include_bytes!("../../assets/opencad-icons/ribbon_target.svg"),
         ToolIcon::WindowSelect => include_bytes!("../../assets/opencad-icons/select_objects.svg"),
