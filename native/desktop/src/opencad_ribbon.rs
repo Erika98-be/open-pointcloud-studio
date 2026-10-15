@@ -82,17 +82,5 @@ fn title_action_style(theme: &Theme, status: button::Status) -> button::Style {
 
 /// Shared Tauri-derived tab state for the 28 px tab strip.
 pub fn tab_style(theme: &Theme, active: bool, status: button::Status) -> button::Style {
-    let colors = ui_theme::colors(theme);
-    let hovered = matches!(status, button::Status::Hovered);
-    button::Style {
-        background: if active {
-            Some(Background::Color(colors.bg))
-        } else if hovered {
-            Some(Background::Color(colors.ribbon_btn_hover))
-        } else {
-            None
-        },
-        text_color: if active || hovered { colors.accent } else { colors.text },
-        ..button::Style::default()
-    }
+    openaec_ui::widgets::ribbon_tab_style(ui_theme::shared_theme(theme), active, status)
 }
