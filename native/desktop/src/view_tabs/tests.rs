@@ -232,6 +232,28 @@ fn the_x_of_the_active_tab_reads_on_the_shared_style_in_every_theme() {
     }
 }
 
+#[test]
+fn active_document_tab_has_the_style_book_transparent_bottom_edge() {
+    // DocumentBar.css uses a two-pixel transparent lower border. The shared
+    // tab helper covers Iced's uniform lower rule with the document surface.
+    let _language = crate::i18n::TestLanguage::hold(crate::i18n::Language::English);
+    let (mut studio, _directory) = studio_with_scan();
+    let _ = studio.update(Message::Views(ViewAction::Save));
+    let plan = made_drawing(&mut studio, "Ground floor", 4.0);
+    let roof = made_drawing(&mut studio, "Roof", 8.0);
+    let _ = studio.update(Message::DrawingView(DrawingViewAction::ShowDrawing(plan)));
+    let _ = studio.update(Message::DrawingView(DrawingViewAction::ShowDrawing(roof)));
+    for theme in [crate::ui_theme::UiTheme::Light, crate::ui_theme::UiTheme::Forge] {
+        studio.ui_theme = theme;
+        let picture = crate::test_render::render_window(&studio, Size::new(1280.0, 760.0));
+        let background = theme.colors().docbar_bg;
+        assert!(!picture.is(330, 180, background), "{} active tab body", theme.key());
+        for y in [181, 182] {
+            assert!(picture.is(330, y, background), "{} transparent edge y={y}: {:?}", theme.key(), picture.rgb(330,y));
+        }
+    }
+}
+
 /// A studio with one scan, its views and drawings in a folder of the test.
 fn studio_with_scan() -> (Studio, tempfile::TempDir) {
     let directory = tempfile::tempdir().unwrap();

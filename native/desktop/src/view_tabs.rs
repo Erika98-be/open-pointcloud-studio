@@ -948,7 +948,11 @@ impl Studio {
         } else {
             body.into()
         };
-        ui_style::tooltip(element, tip).into()
+        ui_style::tooltip(
+            openaec_ui::widgets::document_tab_bottom_gap(theme, element),
+            tip,
+        )
+        .into()
     }
 
     /// What `status.result.view_tabs` reports: the tabs the strip shows, in
