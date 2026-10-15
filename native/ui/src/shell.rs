@@ -382,7 +382,8 @@ fn settings<'a, M: Clone + 'a>(state: &'a ShellState) -> Element<'a, Message<M>>
         slider(0.75..=2.0, p.scale, |scale| Message::Ui(UiEvent::Scale(
             scale
         )))
-        .step(0.05),
+        .step(0.05)
+        .style(move |_, status| widgets::slider_style(p.theme, status)),
     ]
     .spacing(12);
     let sidebar = container(

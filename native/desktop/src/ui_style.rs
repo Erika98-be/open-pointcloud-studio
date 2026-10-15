@@ -147,49 +147,17 @@ pub fn check(theme: &Theme, status: check_box::Status) -> check_box::Style {
 /// bar, filled in the accent colour up to the value, and the knob of its
 /// switch as a ring in the accent colour.
 pub fn slider_style(theme: &Theme, status: slide::Status) -> slide::Style {
-    let colors = colors(theme);
-    slide::Style {
-        rail: slide::Rail {
-            backgrounds: (
-                Background::Color(colors.accent),
-                Background::Color(colors.border_strong),
-            ),
-            width: 4.0,
-            border: Border::default().rounded(2),
-        },
-        handle: slide::Handle {
-            shape: slide::HandleShape::Circle { radius: 7.0 },
-            background: Background::Color(if status == slide::Status::Dragged {
-                colors.accent
-            } else {
-                colors.bg_lighter
-            }),
-            border_width: 2.0,
-            border_color: if status == slide::Status::Hovered {
-                colors.accent_hover
-            } else {
-                colors.accent
-            },
-        },
-    }
+    openaec_ui::widgets::slider_style(ui_theme::shared_theme(theme), status)
 }
 
 /// A progress bar of 8 pixels: the accent colour on the strong border.
 pub fn progress_style(theme: &Theme) -> progress::Style {
-    let colors = colors(theme);
-    progress::Style {
-        background: Background::Color(colors.border_strong),
-        bar: Background::Color(colors.accent),
-        border: Border::default().rounded(4),
-    }
+    openaec_ui::widgets::progress_style(ui_theme::shared_theme(theme))
 }
 
 /// The line of 2 pixels under a row that says how far it is.
 pub fn progress_line_style(theme: &Theme) -> progress::Style {
-    progress::Style {
-        border: Border::default().rounded(1),
-        ..progress_style(theme)
-    }
+    openaec_ui::widgets::progress_line_style(ui_theme::shared_theme(theme))
 }
 
 /// A scroll bar: no rail, a thumb in the accent colour at a quarter, at
