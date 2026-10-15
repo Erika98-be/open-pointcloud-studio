@@ -1700,4 +1700,12 @@ mod tests {
             ]
         );
     }
+
+    #[test]
+    fn shared_modal_shadow_matches_the_pinned_pointcloud_tokens() {
+        for theme in UiTheme::ALL {
+            assert_eq!(theme.shared().dialog_shadow(), theme.colors().dialog_shadow,
+                "{} modal shadow", theme.key());
+        }
+    }
 }
