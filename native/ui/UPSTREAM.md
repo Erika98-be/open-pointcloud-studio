@@ -44,6 +44,9 @@ The native software review renderer draws widget overlays as well as the base
 window, so its settings screenshots include the expanded menu.
 The software renders are in `native/design/pointcloud-settings-{light,forge}.png`.
 The second modal is rendered in `native/design/pointcloud-settings-reset-forge.png`.
+Ribbon, panel and pointer-following tips now use the crate's
+`widgets::themed_tooltip` for consistent text size, padding and width; the
+pointer variant keeps its original zero-gap placement.
 Legacy OpenCAD command SVGs with fixed dark strokes are tinted to the shared
 text color on dark themes. They need final per-icon vector harmonization; the
 current tint keeps every command legible during that work.

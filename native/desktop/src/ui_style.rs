@@ -125,6 +125,7 @@ pub fn scroll(theme: &Theme, status: scrolling::Status) -> scrolling::Style {
 
 /// The box of a tooltip: the tooltip of the brand, Deep Forge with
 /// Blueprint White, in every theme.
+#[cfg(test)]
 pub fn tip_style(theme: &Theme) -> container::Style {
     openaec_ui::widgets::tooltip_style(ui_theme::shared_theme(theme))
 }
@@ -218,15 +219,6 @@ pub fn scrollable<'a>(
         .style(scroll)
 }
 
-/// The box of a tooltip with its text.
-pub fn tip<'a>(content: impl text::IntoFragment<'a>) -> Element<'a, Message> {
-    container(text(content).size(12))
-        .padding([8, 12])
-        .max_width(340)
-        .style(tip_style)
-        .into()
-}
-
 /// The space between a tooltip and what it explains.
 const TIP_GAP: f32 = 8.0;
 
@@ -236,7 +228,8 @@ pub fn tooltip<'a>(
     content: impl Into<Element<'a, Message>>,
     tip_text: impl text::IntoFragment<'a>,
 ) -> tip_widget::Tooltip<'a, Message> {
-    tip_widget::Tooltip::new(content, tip(tip_text), tip_widget::Position::Top).gap(TIP_GAP)
+    openaec_ui::widgets::themed_tooltip(content, tip_text, tip_widget::Position::Top,
+        openaec_ui::Theme::Light)
 }
 
 /// `content` of the ribbon or the top strip with `tip_text` in a tooltip
@@ -246,7 +239,8 @@ pub fn ribbon_tooltip<'a>(
     content: impl Into<Element<'a, Message>>,
     tip_text: impl text::IntoFragment<'a>,
 ) -> tip_widget::Tooltip<'a, Message> {
-    tip_widget::Tooltip::new(content, tip(tip_text), tip_widget::Position::Bottom).gap(TIP_GAP)
+    openaec_ui::widgets::themed_tooltip(content, tip_text, tip_widget::Position::Bottom,
+        openaec_ui::Theme::Light)
 }
 
 /// A wide row with `tip_text` in a tooltip above the pointer, for a tip
@@ -256,7 +250,8 @@ pub fn pointer_tooltip<'a>(
     content: impl Into<Element<'a, Message>>,
     tip_text: impl text::IntoFragment<'a>,
 ) -> tip_widget::Tooltip<'a, Message> {
-    tip_widget::Tooltip::new(content, tip(tip_text), tip_widget::Position::FollowCursor)
+    openaec_ui::widgets::themed_tooltip(content, tip_text, tip_widget::Position::FollowCursor,
+        openaec_ui::Theme::Light).gap(0.0)
 }
 
 /// `content` with `tint` of the theme laid over it while the pointer is
