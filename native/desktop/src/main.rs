@@ -10682,7 +10682,7 @@ impl Studio {
                 58.0
             ),
             reference_icon_action(
-                icon_svg(ToolIcon::Fit, 23.0),
+                icon_svg(ToolIcon::Update, 23.0),
                 "Refresh LOD",
                 Message::RefreshLod,
                 indexed
@@ -11916,7 +11916,7 @@ fn tool_icon(message: &Message) -> ToolIcon {
         Message::MeshRequest(_) => ToolIcon::Mesh,
         Message::ToggleBagPanel => ToolIcon::Building,
         Message::BuildIndex => ToolIcon::Cloud,
-        Message::LoadDetail | Message::RefreshLod => ToolIcon::Fit,
+        Message::LoadDetail | Message::RefreshLod => ToolIcon::Update,
         Message::RemoveSelection | Message::DeleteSelection => ToolIcon::Clear,
         Message::CancelSelection
         | Message::CancelScale
@@ -12206,18 +12206,40 @@ enum ToolIcon {
     Leader,
 }
 
-// SVG artwork is copied from OpenCADStudio/assets/icons at commit 1fec34d.
+/// Commands whose meaning has been reviewed against the shared icon set.
+fn canonical_icon(icon: ToolIcon) -> Option<openaec_ui::icons::Icon> {
+    use openaec_ui::icons::Icon;
+    match icon {
+        ToolIcon::Open => Some(Icon::Open),
+        ToolIcon::Export => Some(Icon::Export),
+        ToolIcon::Fit => Some(Icon::Fit),
+        ToolIcon::Undo => Some(Icon::Undo),
+        ToolIcon::Redo => Some(Icon::Redo),
+        ToolIcon::Save => Some(Icon::Save),
+        _ => None,
+    }
+}
+
+// Remaining SVG artwork is copied from OpenCADStudio/assets/icons at commit 1fec34d.
 fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
+    if let Some(shared) = canonical_icon(icon) {
+        return svg(svg::Handle::from_memory(shared.bytes()))
+            .width(size)
+            .height(size)
+            .style(|theme, _| svg::Style {
+                color: Some(ui_theme::colors(theme).text),
+            })
+            .into();
+    }
     let bytes: &'static [u8] = match icon {
-        ToolIcon::Open => include_bytes!("../../assets/opencad-icons/folder_open.svg"),
+        ToolIcon::Open | ToolIcon::Export | ToolIcon::Fit | ToolIcon::Undo | ToolIcon::Redo
+        | ToolIcon::Save => unreachable!("canonical icons return above"),
         // The scan-folder and section-box icons are drawn for this app in the
         // same palette.
         ToolIcon::OpenFolder => include_bytes!("../../assets/opencad-icons/folder_scans.svg"),
         ToolIcon::SelectionExport => {
             include_bytes!("../../assets/opencad-icons/selection_export.svg")
         }
-        ToolIcon::Export => include_bytes!("../../assets/opencad-icons/file_export.svg"),
-        ToolIcon::Fit => include_bytes!("../../assets/opencad-icons/zoom_ext.svg"),
         ToolIcon::ZoomIn => include_bytes!("../../assets/opencad-icons/zoom_in.svg"),
         ToolIcon::ZoomOut => include_bytes!("../../assets/opencad-icons/zoom_out.svg"),
         ToolIcon::Pan => include_bytes!("../../assets/opencad-icons/pan.svg"),
@@ -12237,8 +12259,6 @@ fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
         ToolIcon::Note => include_bytes!("../../assets/opencad-icons/annotation_note.svg"),
         ToolIcon::Line => include_bytes!("../../assets/opencad-icons/annotation_line.svg"),
         ToolIcon::Clear => include_bytes!("../../assets/opencad-icons/xclip_remove.svg"),
-        ToolIcon::Undo => include_bytes!("../../assets/opencad-icons/undo.svg"),
-        ToolIcon::Redo => include_bytes!("../../assets/opencad-icons/redo.svg"),
         ToolIcon::Camera(CameraPreset::Top | CameraPreset::Bottom) => {
             include_bytes!("../../assets/opencad-icons/view_top.svg")
         }
@@ -12251,7 +12271,6 @@ fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
         ToolIcon::Camera(CameraPreset::Isometric) => {
             include_bytes!("../../assets/opencad-icons/view_iso.svg")
         }
-        ToolIcon::Save => include_bytes!("../../assets/opencad-icons/save.svg"),
         ToolIcon::Move => include_bytes!("../../assets/opencad-icons/move.svg"),
         ToolIcon::Scale => include_bytes!("../../assets/opencad-icons/scale.svg"),
         ToolIcon::Decimate => include_bytes!("../../assets/opencad-icons/point.svg"),
