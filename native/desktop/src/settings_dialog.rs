@@ -2,9 +2,7 @@
 //! what the application is. A choice shows at once; Cancel puts back what was
 //! in use when the dialog opened and Save keeps it for later sessions.
 
-use iced::widget::{
-    button, center, column, container, horizontal_space, mouse_area, opaque, row, text, Space,
-};
+use iced::widget::{button, column, container, horizontal_space, row, text, Space};
 use iced::{Border, Color, Element, Fill};
 
 use crate::i18n::{self, tr, Language};
@@ -182,7 +180,7 @@ impl Studio {
             tab("About", SettingsTab::About),
         ]
         .spacing(2)
-        .width(150);
+        .width(Fill);
 
         let heading = |label: &'static str| {
             text(tr(label))
@@ -295,46 +293,13 @@ impl Studio {
         .spacing(8)
         .align_y(iced::Alignment::Center);
 
-        let card = container(
-            column![
-                row![
-                    text(tr("Settings")).size(15).font(crate::fonts::SEMIBOLD),
-                    horizontal_space(),
-                    button(text("×").size(14))
-                        .on_press(send(SettingsAction::Cancel))
-                        .style(ui_style::tool)
-                        .padding([1, 8]),
-                ]
-                .align_y(iced::Alignment::Center),
-                row![
-                    sidebar,
-                    container(content).padding([4, 18]).width(Fill).height(Fill)
-                ]
-                .height(Fill),
-                footer,
-            ]
-            .spacing(14),
-        )
-        .width(640)
-        .height(460)
-        .padding(18)
-        .style(|theme| {
-            let colors = ui_theme::colors(theme);
-            container::Style::default()
-                .background(colors.dialog_bg)
-                .color(colors.dialog_content_text)
-                .border(Border {
-                    color: colors.dialog_border,
-                    width: 1.0,
-                    radius: 8.0.into(),
-                })
-        });
-
-        Some(opaque(
-            mouse_area(center(opaque(card)).style(|theme| {
-                container::Style::default().background(ui_theme::colors(theme).dialog_overlay)
-            }))
-            .on_press(send(SettingsAction::Cancel)),
+        Some(openaec_ui::widgets::settings_modal(
+            tr("Settings"),
+            sidebar.into(),
+            content,
+            footer.into(),
+            send(SettingsAction::Cancel),
+            self.ui_theme.shared(),
         ))
     }
 }

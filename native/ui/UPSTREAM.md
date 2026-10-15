@@ -27,6 +27,10 @@ Quick-access actions on the title strip now use `widgets::title_action` from
 the shared crate for their 30 × 26 px geometry, hover state and tooltip.
 Pointcloud still supplies its actual command, translated label and icon.
 The Light and Forge software renders remain byte-identical after this change.
+The settings dialog now uses `widgets::settings_modal` for the pinned Tauri
+template's 560 × 500 px card, 120 px sidebar, header, footer and inert backdrop.
+Pointcloud owns the language, theme, CAD viewer and save/cancel behavior.
+The software renders are in `native/design/pointcloud-settings-{light,forge}.png`.
 Legacy OpenCAD command SVGs with fixed dark strokes are tinted to the shared
 text color on dark themes. They need final per-icon vector harmonization; the
 current tint keeps every command legible during that work.

@@ -187,6 +187,24 @@ fn export_harmonized_shell_previews() {
 }
 
 #[test]
+#[ignore = "regenerate settings dialog review images on demand"]
+fn export_shared_settings_review() {
+    let _language = TestLanguage::hold(Language::English);
+    let folder = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../design");
+    let mut studio = Studio::default();
+    for (theme, name) in [(UiTheme::Light, "light"), (UiTheme::Forge, "forge")] {
+        studio.ui_theme = theme;
+        studio.settings_action(crate::settings_dialog::SettingsAction::Open);
+        studio.settings_action(crate::settings_dialog::SettingsAction::Tab(
+            crate::settings_dialog::SettingsTab::Appearance,
+        ));
+        crate::test_render::render_window(&studio, iced::Size::new(1280.0, 800.0))
+            .save_png(&folder.join(format!("pointcloud-settings-{name}.png")));
+        studio.settings_action(crate::settings_dialog::SettingsAction::Cancel);
+    }
+}
+
+#[test]
 fn keys_leave_the_model_alone_while_the_file_view_covers_it() {
     let directory = tempfile::tempdir().unwrap();
     let path = directory.path().join("scan.xyz");
