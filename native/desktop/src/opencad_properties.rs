@@ -4,7 +4,7 @@
 // iced 0.13 palette API.
 
 use iced::widget::{container, row, text};
-use iced::{Background, Border, Element, Fill, Length, Theme};
+use iced::{Border, Element, Fill, Length, Theme};
 
 use crate::ui_style;
 use crate::ui_theme;
@@ -13,33 +13,11 @@ use crate::Message;
 const ROW_H: f32 = 28.0;
 const FONT_SZ: f32 = 12.0;
 
-/// OpenCADStudio's two-column label/value row, adapted for read-only scan data.
+/// Shared property-grid row with Pointcloud's translated field label.
 pub fn property_row(label: &'static str, value: String) -> Element<'static, Message> {
-    let label = crate::i18n::tr(label);
-    let label_col = container(text(label).size(FONT_SZ).style(|theme| text::Style {
-        color: Some(ui_theme::colors(theme).text_secondary),
-    }))
-    .width(Length::FillPortion(5))
-    .height(ROW_H)
-    .align_y(iced::Alignment::Center)
-    .padding([0, 6]);
-    let value_col = container(text(value).size(FONT_SZ))
-        .width(Length::FillPortion(6))
-        .height(ROW_H)
-        .align_y(iced::Alignment::Center)
-        .padding([0, 5]);
-    container(row![label_col, value_col])
-        .height(ROW_H)
-        .width(Fill)
-        .style(|theme: &Theme| container::Style {
-            border: Border {
-                color: ui_theme::colors(theme).border_subtle,
-                width: 1.0,
-                radius: 0.0.into(),
-            },
-            ..Default::default()
-        })
-        .into()
+    openaec_ui::widgets::property_grid_row_with(
+        crate::i18n::tr(label), value, ui_theme::shared_theme,
+    )
 }
 
 /// Keep survey bounds readable within OpenCADStudio's narrow properties dock.
@@ -86,38 +64,14 @@ pub fn bounds_row(axis: &'static str, min: f64, max: f64) -> Element<'static, Me
         .into()
 }
 
-/// Editable variant of OpenCADStudio's two-column property row.
+/// Editable property field in the shared grid.
 pub fn property_input<'a>(
     label: &'static str,
     placeholder: &'static str,
     value: &'a str,
     on_input: impl Fn(String) -> Message + 'a,
 ) -> Element<'a, Message> {
-    let label = crate::i18n::tr(label);
-    let label_col = container(text(label).size(FONT_SZ).style(|theme| text::Style {
-        color: Some(ui_theme::colors(theme).text_secondary),
-    }))
-    .width(Length::FillPortion(5))
-    .height(ROW_H)
-    .align_y(iced::Alignment::Center)
-    .padding([0, 6]);
-    let value_col = container(ui_style::text_input(placeholder, value).on_input(on_input))
-        .width(Length::FillPortion(6))
-        .height(ROW_H)
-        .align_y(iced::Alignment::Center)
-        .padding([0, 5]);
-    container(row![label_col, value_col])
-        .height(ROW_H)
-        .width(Fill)
-        .style(|theme: &Theme| container::Style {
-            border: Border {
-                color: ui_theme::colors(theme).border_subtle,
-                width: 1.0,
-                radius: 0.0.into(),
-            },
-            ..Default::default()
-        })
-        .into()
+    property_control(label, ui_style::text_input(placeholder, value).on_input(on_input).into())
 }
 
 /// The two-column row with a control of the caller's choice, such as a
@@ -126,46 +80,15 @@ pub fn property_control<'a>(
     label: &'static str,
     control: Element<'a, Message>,
 ) -> Element<'a, Message> {
-    let label = crate::i18n::tr(label);
-    let label_col = container(text(label).size(FONT_SZ).style(|theme| text::Style {
-        color: Some(ui_theme::colors(theme).text_secondary),
-    }))
-    .width(Length::FillPortion(5))
-    .height(ROW_H)
-    .align_y(iced::Alignment::Center)
-    .padding([0, 6]);
-    let value_col = container(control)
-        .width(Length::FillPortion(6))
-        .height(ROW_H)
-        .align_y(iced::Alignment::Center)
-        .padding([0, 5]);
-    container(row![label_col, value_col])
-        .height(ROW_H)
-        .width(Fill)
-        .style(|theme: &Theme| container::Style {
-            border: Border {
-                color: ui_theme::colors(theme).border_subtle,
-                width: 1.0,
-                radius: 0.0.into(),
-            },
-            ..Default::default()
-        })
-        .into()
+    openaec_ui::widgets::property_grid_control_with(
+        crate::i18n::tr(label), control, ui_theme::shared_theme,
+    )
 }
 
 pub fn section_header(title: &'static str) -> Element<'static, Message> {
-    container(
-        text(crate::i18n::tr(title))
-            .size(12)
-            .font(crate::fonts::SEMIBOLD),
+    openaec_ui::widgets::property_section_with(
+        crate::i18n::tr(title), ui_theme::shared_theme,
     )
-    .width(Fill)
-    .padding([4, 6])
-    .style(|theme| container::Style {
-        background: Some(Background::Color(ui_theme::colors(theme).bg_lighter)),
-        ..Default::default()
-    })
-    .into()
 }
 
 /// A control whose explanation shows in a tooltip above it instead of as

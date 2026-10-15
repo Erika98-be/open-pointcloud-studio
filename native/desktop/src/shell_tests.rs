@@ -142,6 +142,20 @@ fn ribbon_group_rules_follow_style_book_geometry() {
 }
 
 #[test]
+fn shared_property_rows_keep_a_28_pixel_rhythm_in_both_themes() {
+    let mut studio = Studio::default();
+    for theme in [UiTheme::Light, UiTheme::Forge] {
+        studio.ui_theme = theme;
+        let picture = crate::test_render::render_window(&studio, iced::Size::new(1280.0, 760.0));
+        let rule = picture.rgb(1100, 283);
+        assert_eq!(picture.rgb(1100, 311), rule, "{} second row", theme.key());
+        assert_eq!(picture.rgb(1100, 339), rule, "{} third row", theme.key());
+        assert_ne!(picture.rgb(1100, 282), rule, "{} one-pixel rule", theme.key());
+        assert_ne!(picture.rgb(1100, 256), picture.rgb(1100, 232), "{} section boundary", theme.key());
+    }
+}
+
+#[test]
 #[ignore = "regenerate native review images on demand"]
 fn export_harmonized_shell_previews() {
     let folder = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../design");
