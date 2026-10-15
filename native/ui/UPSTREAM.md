@@ -15,8 +15,9 @@ shell. Keep the source snapshot and license in sync when updating it.
 The desktop now uses the source Tauri shell heights from `openaec_ui::model::metrics`:
 32 px title, 28 px ribbon tabs, 94 px ribbon tools, 30 px document strip and
 22 px status. The document strip spans the explorer, canvas and properties.
-Pointcloud still owns the commands, adaptive ribbon groups and 3D drawing;
-those domain behaviors are not replaced by the crate's demo shell.
+`openaec_ui::frame::FrameSlots` now composes the complete Pointcloud window,
+including File view. Pointcloud still owns the commands, adaptive ribbon groups
+and 3D drawing; those domain behaviors are not replaced by the crate's demo shell.
 The software-rendered [Light](../design/pointcloud-shell-light.png) and
 [Forge](../design/pointcloud-shell-forge.png) views are review baselines.
 Legacy OpenCAD command SVGs with fixed dark strokes are tinted to the shared

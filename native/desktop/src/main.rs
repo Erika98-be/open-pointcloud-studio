@@ -10074,7 +10074,9 @@ impl Studio {
         }
     }
 
-    fn ribbon(&self) -> Element<'_, Message> {
+    fn ribbon_sections(
+        &self,
+    ) -> (Element<'_, Message>, Element<'_, Message>, Option<Element<'_, Message>>) {
         let active_tab = self.ribbon_tab;
         let compact = self.window_size.is_some_and(|size| size.width < 930.0);
         let file_button = button(
@@ -10173,7 +10175,7 @@ impl Studio {
             .style(|theme| container::Style::default()
                 .background(ui_theme::colors(theme).bg_lighter));
         if self.file_open {
-            return column![title_strip, tab_strip].width(Fill).into();
+            return (title_strip.into(), tab_strip.into(), None);
         }
 
         let open = self.ribbon_panel_open;
@@ -10183,18 +10185,19 @@ impl Studio {
                 .padding([0, 4])
                 .width(Fill)
                 .height(opencad_ribbon::TOOL_BAR_H)
+                .style(ribbon_style)
                 .into();
-        container(
-            column![
-                title_strip,
-                tab_strip,
-                tool_strip,
-            ]
-            .spacing(0),
-        )
-        .width(Fill)
-        .style(ribbon_style)
-        .into()
+        (title_strip.into(), tab_strip.into(), Some(tool_strip))
+    }
+
+    #[cfg(test)]
+    fn ribbon(&self) -> Element<'_, Message> {
+        let (title, tabs, tools) = self.ribbon_sections();
+        let mut bands = column![title, tabs].spacing(0);
+        if let Some(tools) = tools {
+            bands = bands.push(tools);
+        }
+        bands.width(Fill).into()
     }
 
     /// The view-cube dropdown replaces the former View ribbon.
@@ -10957,15 +10960,15 @@ impl Studio {
 
     fn window_view(&self) -> Element<'_, Message> {
         if self.file_open {
-            return self.with_dialogs(
-                column![
-                    self.ribbon(),
-                    self.file_view(),
-                    self.status_bar(self.status.clone()),
-                ]
-                .height(Fill)
-                .into(),
-            );
+            let (titlebar, tabs, ribbon) = self.ribbon_sections();
+            return self.with_dialogs(openaec_ui::frame::frame(openaec_ui::frame::FrameSlots {
+                titlebar,
+                tabs,
+                ribbon,
+                documents: None,
+                content: self.file_view(),
+                status: self.status_bar(self.status.clone()),
+            }));
         }
         let sheet_canvas = self.layout_canvas();
         let model_visible = sheet_canvas.is_none() && !self.drawing_view.shown;
@@ -11613,14 +11616,15 @@ impl Studio {
         ]
         .height(Fill);
         let mesh_status = self.mesh_job.as_ref().map(MeshJob::progress_text);
-        let window = column![
-            self.ribbon(),
-            self.tab_strip(),
-            content,
-            self.status_bar(mesh_status.unwrap_or_else(|| self.status.clone())),
-        ]
-        .height(Fill);
-        self.with_dialogs(window.into())
+        let (titlebar, tabs, ribbon) = self.ribbon_sections();
+        self.with_dialogs(openaec_ui::frame::frame(openaec_ui::frame::FrameSlots {
+            titlebar,
+            tabs,
+            ribbon,
+            documents: Some(self.tab_strip()),
+            content: content.into(),
+            status: self.status_bar(mesh_status.unwrap_or_else(|| self.status.clone())),
+        }))
     }
 
     /// The window with the card of the Pointcloud to Drawing wizard or of Mesh

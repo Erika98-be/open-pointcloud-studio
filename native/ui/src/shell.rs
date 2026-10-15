@@ -303,8 +303,16 @@ pub fn shell<'a, M: Clone + 'a>(
             .background(t.status_bg)
             .color(t.status_text)
     });
+    let bands = crate::frame::frame(crate::frame::FrameSlots {
+        titlebar: titlebar.into(),
+        tabs: tabs.into(),
+        ribbon: Some(ribbon.into()),
+        documents: Some(document_bar.into()),
+        content: body,
+        status: status.into(),
+    });
     let base: Element<'a, Message<M>> =
-        container(column![titlebar, tabs, ribbon, document_bar, body, status])
+        container(bands)
             .height(Fill)
             .width(Fill)
             .style(move |_| widgets::surface(theme))
