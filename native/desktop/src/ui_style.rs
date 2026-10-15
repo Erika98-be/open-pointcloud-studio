@@ -21,8 +21,8 @@ use iced::widget::{
     scrollable as scrolling, slider as slide, text, text_input as field, tooltip as tip_widget,
 };
 use iced::{
-    event, mouse, Background, Border, Color, Element, Event, Length, Point, Rectangle, Renderer,
-    Shadow, Size, Theme, Vector,
+    event, mouse, Background, Color, Element, Event, Length, Point, Rectangle, Renderer, Size,
+    Theme, Vector,
 };
 
 use crate::ui_theme::{self, UiColors};
@@ -31,31 +31,11 @@ use crate::Message;
 /// What a control that cannot be used keeps of its colours: the template
 /// draws buttons and fields that wait at half their strength, and the
 /// buttons of the ribbon remain legible while unavailable.
-const DISABLED: f32 = 0.5;
 #[cfg(test)]
 const RIBBON_DISABLED: f32 = 0.72;
 
 fn colors(theme: &Theme) -> UiColors {
     ui_theme::colors(theme)
-}
-
-/// `style` at `share` of its strength.
-fn faded(style: button::Style, share: f32) -> button::Style {
-    button::Style {
-        background: style
-            .background
-            .map(|background| background.scale_alpha(share)),
-        text_color: style.text_color.scale_alpha(share),
-        border: Border {
-            color: style.border.color.scale_alpha(share),
-            ..style.border
-        },
-        shadow: style.shadow,
-    }
-}
-
-fn hovered(status: button::Status) -> bool {
-    matches!(status, button::Status::Hovered | button::Status::Pressed)
 }
 
 /// The button that goes on: Save, Create, Next, Run. Filled with the accent
@@ -86,37 +66,12 @@ pub fn tool(theme: &Theme, status: button::Status) -> button::Style {
 /// A text link, such as the source of a map: the accent colour, Signal
 /// Orange under the pointer.
 pub fn link(theme: &Theme, status: button::Status) -> button::Style {
-    let colors = colors(theme);
-    let style = button::Style {
-        background: None,
-        text_color: if hovered(status) {
-            colors.accent_hover
-        } else {
-            colors.accent
-        },
-        border: Border::default(),
-        shadow: Shadow::default(),
-    };
-    if status == button::Status::Disabled {
-        faded(style, DISABLED)
-    } else {
-        style
-    }
+    openaec_ui::widgets::link_button_style(ui_theme::shared_theme(theme), status)
 }
 
 /// An item of the status bar that can be clicked, such as Cancel import.
 pub fn status_button(theme: &Theme, status: button::Status) -> button::Style {
-    let colors = colors(theme);
-    button::Style {
-        background: hovered(status).then_some(Background::Color(colors.status_hover)),
-        text_color: if status == button::Status::Disabled {
-            colors.status_text_label
-        } else {
-            colors.status_text
-        },
-        border: Border::default(),
-        shadow: Shadow::default(),
-    }
+    openaec_ui::widgets::status_button_style(ui_theme::shared_theme(theme), status)
 }
 
 /// A text field: the input colours of the dialogs, square, with the focus
