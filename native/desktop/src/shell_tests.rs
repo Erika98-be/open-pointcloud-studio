@@ -647,7 +647,8 @@ fn the_window_is_drawn_in_the_tokens_of_each_theme() {
             theme.key(),
             picture.rgb(500, 750)
         );
-        // Panel and title strip both follow the shared theme tokens.
+        // Panel and title strip both follow the shared theme tokens. Sample
+        // the strip away from its centered accent-coloured title.
         assert!(
             picture.is(100, 700, colors.bg),
             "{}: the panel is {:?}",
@@ -655,10 +656,10 @@ fn the_window_is_drawn_in_the_tokens_of_each_theme() {
             picture.rgb(100, 700)
         );
         assert!(
-            picture.is(700, 14, colors.bg_lighter),
+            picture.is(900, 14, colors.bg_lighter),
             "{}: the strip is {:?}",
             theme.key(),
-            picture.rgb(700, 14)
+            picture.rgb(900, 14)
         );
     }
 }

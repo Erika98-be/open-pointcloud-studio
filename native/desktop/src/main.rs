@@ -10158,12 +10158,19 @@ impl Studio {
         let title_strip = container(
             row![
                 container(logo)
-                    .width(30)
-                    .align_x(iced::Alignment::Center),
-                text("Open Pointcloud Studio").font(fonts::MEDIUM).size(12),
-                iced::widget::horizontal_space(),
-                quick_access,
-                settings_button
+                    .width(iced::Length::FillPortion(1))
+                    .align_x(iced::Alignment::Start),
+                container(
+                    text("Open Pointcloud Studio")
+                        .font(fonts::MEDIUM)
+                        .size(12)
+                        .color(self.ui_theme.colors().accent),
+                )
+                .width(iced::Length::FillPortion(1))
+                .center_x(Fill),
+                container(row![quick_access, settings_button].spacing(0))
+                    .width(iced::Length::FillPortion(1))
+                    .align_x(iced::Alignment::End),
             ]
             .width(Fill)
             .align_y(iced::Alignment::Center)
