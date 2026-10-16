@@ -24,7 +24,9 @@ fn drawing_and_transform_tools_use_shared_domain_icons() {
     assert_eq!(crate::domain_icon(crate::ToolIcon::Dimension), Some(DomainIcon::DrawingDimension));
     assert_eq!(crate::domain_icon(crate::ToolIcon::Move), Some(DomainIcon::TransformMove));
     assert_eq!(crate::domain_icon(crate::ToolIcon::Line), Some(DomainIcon::DrawingLine));
-    for icon in [DomainIcon::DrawingNote, DomainIcon::DrawingDimension, DomainIcon::TransformMove, DomainIcon::DrawingLine] {
+    assert_eq!(crate::domain_icon(crate::ToolIcon::Text), Some(DomainIcon::DrawingText));
+    assert_eq!(crate::domain_icon(crate::ToolIcon::Leader), Some(DomainIcon::DrawingLeader));
+    for icon in [DomainIcon::DrawingNote, DomainIcon::DrawingDimension, DomainIcon::TransformMove, DomainIcon::DrawingLine, DomainIcon::DrawingText, DomainIcon::DrawingLeader] {
         assert_ne!(icon.bytes(16), icon.bytes(24), "small form is reviewed separately");
     }
 }

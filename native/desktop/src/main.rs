@@ -12214,6 +12214,8 @@ fn domain_icon(icon: ToolIcon) -> Option<openaec_ui::icons::DomainIcon> {
         ToolIcon::Note => Some(DomainIcon::DrawingNote),
         ToolIcon::Move => Some(DomainIcon::TransformMove),
         ToolIcon::Line => Some(DomainIcon::DrawingLine),
+        ToolIcon::Text => Some(DomainIcon::DrawingText),
+        ToolIcon::Leader => Some(DomainIcon::DrawingLeader),
         _ => None,
     }
 }
@@ -12317,9 +12319,9 @@ fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
         ToolIcon::Locked => include_bytes!("../../assets/opencad-icons/browser_locked.svg"),
         ToolIcon::Unlocked => include_bytes!("../../assets/opencad-icons/browser_unlocked.svg"),
         // The remaining drawing annotations are drawn like those of the views.
-        ToolIcon::Text => include_bytes!("../../assets/opencad-icons/annotation_text.svg"),
+        ToolIcon::Text => unreachable!("domain icon returns above"),
         ToolIcon::Dimension => unreachable!("domain icon returns above"),
-        ToolIcon::Leader => include_bytes!("../../assets/opencad-icons/annotation_leader.svg"),
+        ToolIcon::Leader => unreachable!("domain icon returns above"),
     };
     svg(svg::Handle::from_memory(bytes))
         .width(size)
