@@ -29,6 +29,20 @@ fn drawing_and_transform_tools_use_shared_domain_icons() {
     }
 }
 
+#[test]
+fn explorer_commands_use_shared_semantic_icons() {
+    use openaec_ui::icons::Icon;
+    for (tool, expected) in [
+        (crate::ToolIcon::Duplicate, Icon::Duplicate),
+        (crate::ToolIcon::Rename, Icon::Rename),
+        (crate::ToolIcon::ChevronOpen, Icon::DisclosureExpanded),
+        (crate::ToolIcon::ChevronClosed, Icon::DisclosureCollapsed),
+    ] {
+        assert_eq!(crate::canonical_icon(tool), Some(expected));
+        assert!(!expected.bytes().is_empty());
+    }
+}
+
 fn send(studio: &mut Studio, command: ApiCommand) -> Value {
     let (reply, receive) = std::sync::mpsc::channel();
     let _ = studio.handle_api(ApiRequest { command, reply });

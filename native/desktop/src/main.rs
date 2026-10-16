@@ -12197,6 +12197,10 @@ fn canonical_icon(icon: ToolIcon) -> Option<openaec_ui::icons::Icon> {
         ToolIcon::Undo => Some(Icon::Undo),
         ToolIcon::Redo => Some(Icon::Redo),
         ToolIcon::Save => Some(Icon::Save),
+        ToolIcon::Duplicate => Some(Icon::Duplicate),
+        ToolIcon::Rename => Some(Icon::Rename),
+        ToolIcon::ChevronOpen => Some(Icon::DisclosureExpanded),
+        ToolIcon::ChevronClosed => Some(Icon::DisclosureCollapsed),
         _ => None,
     }
 }
@@ -12237,7 +12241,10 @@ fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
     let bytes: &'static [u8] = match icon {
         ToolIcon::Open | ToolIcon::Export | ToolIcon::Fit | ToolIcon::FitSelection
         | ToolIcon::ZoomIn | ToolIcon::ZoomOut | ToolIcon::Pan | ToolIcon::Undo
-        | ToolIcon::Redo | ToolIcon::Save => unreachable!("canonical icons return above"),
+        | ToolIcon::Redo | ToolIcon::Save | ToolIcon::Duplicate | ToolIcon::Rename
+        | ToolIcon::ChevronOpen | ToolIcon::ChevronClosed => {
+            unreachable!("canonical icons return above")
+        }
         // The scan-folder and section-box icons are drawn for this app in the
         // same palette.
         ToolIcon::OpenFolder => include_bytes!("../../assets/opencad-icons/folder_scans.svg"),
@@ -12305,10 +12312,6 @@ fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
         ToolIcon::SectionSheet => include_bytes!("../../assets/opencad-icons/browser_section.svg"),
         ToolIcon::DrawingFile => include_bytes!("../../assets/opencad-icons/browser_file.svg"),
         ToolIcon::Bcf => include_bytes!("../../assets/opencad-icons/browser_bcf.svg"),
-        ToolIcon::ChevronOpen => include_bytes!("../../assets/opencad-icons/chevron_open.svg"),
-        ToolIcon::ChevronClosed => include_bytes!("../../assets/opencad-icons/chevron_closed.svg"),
-        ToolIcon::Duplicate => include_bytes!("../../assets/opencad-icons/browser_duplicate.svg"),
-        ToolIcon::Rename => include_bytes!("../../assets/opencad-icons/browser_rename.svg"),
         ToolIcon::Update => include_bytes!("../../assets/opencad-icons/browser_update.svg"),
         ToolIcon::Sheet => include_bytes!("../../assets/opencad-icons/browser_sheet.svg"),
         ToolIcon::Locked => include_bytes!("../../assets/opencad-icons/browser_locked.svg"),
