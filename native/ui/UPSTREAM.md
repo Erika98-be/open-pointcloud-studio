@@ -68,3 +68,10 @@ A field-by-field comparison found 378 values identical to the old Pointcloud
 tokens and seven deliberate changes to the Style Repo values: the five ribbon
 group labels and Light-theme status text/label. These visible differences
 align Pointcloud with the common Tauri-derived palette.
+
+The portable core now has 30 semantic controls. Print, Save As, and window
+Restore were compared with pinned Geotechniek UI usage at 16, 24, and 32 px
+in Light and Forge before entering the crate. The source-design review and
+semantic crosswalk remain in the Style Repo; the three approved SVGs and Rust
+`Icon` variants are byte-for-byte synchronized here. Domain and ambiguous
+Geotechniek actions remain outside the portable core.
