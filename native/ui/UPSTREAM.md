@@ -85,3 +85,10 @@ seven Geotechniek domain meanings remain design work. Five additional
 CAD editing meanings and three drawing/frame meanings are included as crate assets for future use but are not
 yet Pointcloud commands. Dimension, Note, Move and Line now use the same reviewed domain icons in Pointcloud and Geotechniek;
 the existing Pointcloud actions still own their behavior.
+
+The shared crate also carries twelve PDF ribbon domain meanings selected after
+reviewing seven source SVG collisions in Open PDF Studio. Four have optically
+simplified 16 px vectors. The package now exposes 33 `DomainIcon` variants;
+Pointcloud keeps its own commands and does not invoke these PDF-only meanings.
+The original PDF Studio JavaScript application has not been migrated to the
+shared crate. The Style Repo keeps the source mapping and native comparison.
