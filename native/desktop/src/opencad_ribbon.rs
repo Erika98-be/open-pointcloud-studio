@@ -3,10 +3,9 @@
 // Copyright OpenCADStudio contributors. Licensed under GPL-3.0.
 // Changes: adapted the ribbon primitives to iced 0.13 and point-cloud commands.
 
-use iced::widget::button;
-use iced::{Element, Theme};
+use iced::Element;
 
-use crate::{ui_theme, Message};
+use crate::Message;
 
 mod adaptive;
 pub use adaptive::{AdaptivePanel, AdaptiveRibbon};
@@ -31,9 +30,4 @@ pub fn render_reference_group<'a>(
     tools: Element<'a, Message>,
 ) -> Element<'a, Message> {
     openaec_ui::widgets::ribbon_group(theme, crate::i18n::tr(title), tools, width)
-}
-
-/// Shared Tauri-derived tab state for the 28 px tab strip.
-pub fn tab_style(theme: &Theme, active: bool, status: button::Status) -> button::Style {
-    openaec_ui::widgets::ribbon_tab_style(ui_theme::shared_theme(theme), active, status)
 }

@@ -10079,19 +10079,19 @@ impl Studio {
     ) -> (Element<'_, Message>, Element<'_, Message>, Option<Element<'_, Message>>) {
         let active_tab = self.ribbon_tab;
         let compact = self.window_size.is_some_and(|size| size.width < 930.0);
-        let file_button = button(
+        let file_button = openaec_ui::widgets::ribbon_tab(
             row![
-                text(i18n::tr("File")).size(12).font(fonts::MEDIUM),
+                text(i18n::tr("File")).size(12).font(fonts::SEMIBOLD),
                 text("⌄").size(12),
             ]
             .spacing(6)
-            .align_y(iced::Alignment::Center),
-        )
-        .on_press(Message::ToggleFile)
-        .style(|theme, status| opencad_ribbon::tab_style(theme, self.file_open, status))
-        .width(if compact { 70 } else { 80 })
-        .height(26)
-        .padding([3, 11]);
+            .align_y(iced::Alignment::Center)
+            .into(),
+            Message::ToggleFile,
+            if compact { 70.0 } else { 80.0 },
+            openaec_ui::widgets::RibbonTabKind::File,
+            self.ui_theme.shared(),
+        );
         let tab_buttons: Vec<Element<'_, Message>> = RibbonTab::CORE
             .into_iter()
             .map(|tab| {
@@ -10100,6 +10100,7 @@ impl Studio {
                     Message::RibbonTabSelected(tab),
                     !self.file_open && active_tab == tab,
                     compact,
+                    self.ui_theme.shared(),
                 )
             })
             .collect();
@@ -10174,12 +10175,9 @@ impl Studio {
         .style(|theme| container::Style::default()
             .background(ui_theme::colors(theme).bg_lighter)
             .color(ui_theme::colors(theme).text));
-        let tab_strip = container(row![file_button, tabs].spacing(2).align_y(iced::Alignment::End))
-            .padding([0, 8])
-            .height(openaec_ui::model::metrics::TABS)
-            .width(Fill)
-            .style(|theme| container::Style::default()
-                .background(ui_theme::colors(theme).bg_lighter));
+        let tab_strip = openaec_ui::widgets::ribbon_tab_strip(
+            row![file_button, tabs].spacing(2).into(), self.ui_theme.shared(),
+        );
         if self.file_open {
             return (title_strip.into(), tab_strip.into(), None);
         }
@@ -11700,6 +11698,7 @@ fn ribbon_title_tab(
     message: Message,
     active: bool,
     compact: bool,
+    theme: openaec_ui::Theme,
 ) -> Element<'static, Message> {
     let width = match (compact, label) {
         (true, "Display") => 82.0,
@@ -11729,26 +11728,13 @@ fn ribbon_title_tab(
             .align_x(iced::Alignment::Center)
             .into()
     };
-    column![
-        button(container(label).width(Fill).center_x(Fill))
-            .on_press(message)
-            .style(move |theme, status| opencad_ribbon::tab_style(theme, active, status))
-            .width(Fill)
-            .height(26)
-            .padding([3, 6]),
-        container(iced::widget::Space::with_height(2))
-            .width(Fill)
-            .style(move |theme| {
-                container::Style::default().background(if active {
-                    ui_theme::colors(theme).accent
-                } else {
-                    Color::TRANSPARENT
-                })
-            }),
-    ]
-    .spacing(0)
-    .width(iced::Length::Fixed(width))
-    .into()
+    openaec_ui::widgets::ribbon_tab(
+        label,
+        message,
+        width,
+        openaec_ui::widgets::RibbonTabKind::Regular { active },
+        theme,
+    )
 }
 
 enum ReferenceActionSize {

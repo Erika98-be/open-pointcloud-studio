@@ -142,6 +142,24 @@ fn ribbon_group_rules_follow_style_book_geometry() {
 }
 
 #[test]
+fn ribbon_tabs_match_the_shared_outline_and_rule_in_both_themes() {
+    let mut studio = Studio::default();
+    for theme in [UiTheme::Light, UiTheme::Forge] {
+        studio.ui_theme = theme;
+        let picture = crate::test_render::render_window(&studio, iced::Size::new(1280.0, 760.0));
+        let tokens = theme.shared().tokens();
+        assert!(picture.is(40, 50, tokens.file_tab_bg), "{} File tab", theme.key());
+        assert!(picture.is(110, 32, tokens.accent), "{} active top border", theme.key());
+        assert!(picture.is(110, 59, tokens.bg), "{} active bottom gap", theme.key());
+        assert!(picture.is(500, 59, tokens.accent), "{} continuous rule", theme.key());
+        studio.file_open = true;
+        let file = crate::test_render::render_window(&studio, iced::Size::new(1280.0, 760.0));
+        assert!(!file.is(110, 32, tokens.accent), "{} Home inactive in File view", theme.key());
+        studio.file_open = false;
+    }
+}
+
+#[test]
 fn shared_property_rows_keep_a_28_pixel_rhythm_in_both_themes() {
     let mut studio = Studio::default();
     for theme in [UiTheme::Light, UiTheme::Forge] {
