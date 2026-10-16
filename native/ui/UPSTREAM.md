@@ -29,7 +29,9 @@ The software-rendered [Light](../design/pointcloud-shell-light.png) and
 Quick-access actions on the title strip now use `widgets::title_action` from
 the shared crate for their 30 × 26 px geometry, hover state and tooltip.
 Pointcloud still supplies its actual command, translated label and icon.
-The Light and Forge software renders remain byte-identical after this change.
+The shared settings action now uses the reviewed gear icon; `Icon::Controls`
+retains the former slider artwork for view and property controls. Light and
+Forge shell and settings baselines were regenerated for this semantic change.
 The settings dialog now uses `widgets::settings_modal` for the pinned Tauri
 template's 560 × 500 px card, 120 px sidebar, header, footer and inert backdrop.
 Pointcloud owns the language, theme, CAD viewer and save/cancel behavior.
