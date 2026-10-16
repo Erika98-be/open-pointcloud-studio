@@ -73,5 +73,7 @@ The portable core now has 30 semantic controls. Print, Save As, and window
 Restore were compared with pinned Geotechniek UI usage at 16, 24, and 32 px
 in Light and Forge before entering the crate. The source-design review and
 semantic crosswalk remain in the Style Repo; the three approved SVGs and Rust
-`Icon` variants are byte-for-byte synchronized here. Domain and ambiguous
-Geotechniek actions remain outside the portable core.
+`Icon` variants are byte-for-byte synchronized here. Three reviewed Geotechniek
+placement symbols (Sondering, Boring and Sonderingsraster) now live separately
+in `DomainIcon` with dedicated 16 px artwork. The ambiguous actions and other
+nineteen Geotechniek domain meanings remain design work.
