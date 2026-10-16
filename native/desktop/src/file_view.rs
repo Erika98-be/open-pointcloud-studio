@@ -6,7 +6,7 @@
 
 use std::sync::atomic::Ordering;
 
-use iced::widget::{button, column, container, horizontal_space, row, text, Column, Space};
+use iced::widget::{button, column, container, horizontal_space, row, text, Space};
 use iced::{Element, Fill, Task};
 use pointcloud_core::ExportFormat;
 use serde_json::{json, Value};
@@ -124,9 +124,6 @@ pub enum FileAction {
     /// Open the Pointcloud to Drawing wizard.
     MeshToPlans,
 }
-
-/// The widest a column of tiles grows on a wide window.
-const TILE_COLUMN_W: f32 = 620.0;
 
 impl Studio {
     /// Carry out a tile of the File view and return to the model.
@@ -271,29 +268,15 @@ impl Studio {
     }
 
     /// The title of a page with one line under it that says what it is for.
-    fn page_heading(&self, title: &'static str, lead: &'static str) -> Column<'_, Message> {
-        column![
-            text(tr(title)).size(22).font(fonts::HEADING),
-            text(tr(lead))
-                .size(13)
-                .color(self.ui_theme.colors().text_secondary),
-        ]
-        .spacing(6)
+    fn page_heading(&self, title: &'static str, lead: &'static str) -> Element<'_, Message> {
+        openaec_ui::widgets::backstage_page_heading(
+            tr(title), tr(lead), self.ui_theme.shared(),
+        )
     }
 
     /// A small heading above a group of tiles.
     fn group_caption(&self, label: &'static str) -> Element<'_, Message> {
-        container(
-            text(tr(label))
-                .size(10)
-                .color(self.ui_theme.colors().text_muted),
-        )
-        .padding(iced::Padding {
-            top: 26.0,
-            bottom: 6.0,
-            ..iced::Padding::ZERO
-        })
-        .into()
+        openaec_ui::widgets::backstage_group_caption(tr(label), self.ui_theme.shared())
     }
 
     /// A task as a tile: its name, and under it what it writes or what it
@@ -305,29 +288,12 @@ impl Studio {
         action: FileAction,
         available: bool,
     ) -> Element<'_, Message> {
-        let muted = self.ui_theme.colors().text_secondary;
-        button(
-            column![
-                text(tr(title)).size(15).font(fonts::SEMIBOLD),
-                text(tr(detail)).size(12).color(muted),
-            ]
-            .spacing(3),
+        openaec_ui::widgets::backstage_task_tile_with(
+            tr(title),
+            tr(detail),
+            available.then_some(Message::FileAction(action)),
+            ui_theme::shared_theme,
         )
-        .on_press_maybe(available.then_some(Message::FileAction(action)))
-        .style(|theme, status| {
-            let mut style = ui_style::ribbon_button(theme, false, status);
-            let colors = ui_theme::colors(theme);
-            style.border.color = colors.border;
-            style.border.width = 1.0;
-            style.border.radius = 4.0.into();
-            if style.background.is_none() {
-                style.background = Some(colors.accent_soft.into());
-            }
-            style
-        })
-        .width(Fill)
-        .padding([12, 16])
-        .into()
     }
 
     /// The tile that opens the Pointcloud to Drawing wizard, on the New page and
@@ -343,10 +309,7 @@ impl Studio {
 
     /// A column of tiles that does not grow wider than reads well.
     fn tiles<'a>(tiles: impl IntoIterator<Item = Element<'a, Message>>) -> Element<'a, Message> {
-        container(Column::with_children(tiles).spacing(8).width(Fill))
-            .width(Fill)
-            .max_width(TILE_COLUMN_W)
-            .into()
+        openaec_ui::widgets::backstage_tile_column(tiles)
     }
 
     fn new_page(&self) -> Element<'_, Message> {
@@ -624,7 +587,7 @@ impl Studio {
             self.group_caption(key("CURRENT SCAN")),
             text(active_name).size(16),
             self.group_caption(key("OPEN SCANS")),
-            container(open_scans).width(Fill).max_width(TILE_COLUMN_W),
+            container(open_scans).width(Fill).max_width(openaec_ui::widgets::BACKSTAGE_TILE_WIDTH),
         ]
         .spacing(4)
         .width(Fill)

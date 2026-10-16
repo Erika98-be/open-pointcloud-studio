@@ -292,6 +292,26 @@ fn export_display_popover_review() {
 }
 
 #[test]
+#[ignore = "regenerate File task-page review images on demand"]
+fn export_file_task_pages_review() {
+    let folder = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../design");
+    std::fs::create_dir_all(&folder).unwrap();
+    let mut studio = Studio::default();
+    studio.file_open = true;
+    for (page, page_name) in [
+        (crate::file_view::FilePage::New, "new"),
+        (crate::file_view::FilePage::Open, "open"),
+    ] {
+        studio.file_page = page;
+        for (theme, theme_name) in [(UiTheme::Light, "light"), (UiTheme::Forge, "forge")] {
+            studio.ui_theme = theme;
+            crate::test_render::render_window(&studio, iced::Size::new(1280.0, 760.0))
+                .save_png(&folder.join(format!("pointcloud-file-{page_name}-{theme_name}.png")));
+        }
+    }
+}
+
+#[test]
 #[ignore = "regenerate settings dialog review images on demand"]
 fn export_shared_settings_review() {
     let _language = TestLanguage::hold(Language::English);
