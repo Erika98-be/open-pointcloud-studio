@@ -76,4 +76,6 @@ semantic crosswalk remain in the Style Repo; the three approved SVGs and Rust
 `Icon` variants are byte-for-byte synchronized here. Three reviewed Geotechniek
 placement symbols (Sondering, Boring and Sonderingsraster) now live separately
 in `DomainIcon` with dedicated 16 px artwork. The ambiguous actions and other
-nineteen Geotechniek domain meanings remain design work.
+seventeen Geotechniek domain meanings remain design work. Dimension and Note
+now use the same reviewed drawing-domain icons in Pointcloud and Geotechniek;
+the existing Pointcloud actions still own their behavior.

@@ -12206,6 +12206,8 @@ fn domain_icon(icon: ToolIcon) -> Option<openaec_ui::icons::DomainIcon> {
     match icon {
         ToolIcon::Building => Some(DomainIcon::PointcloudBagPanel),
         ToolIcon::Shading => Some(DomainIcon::PointcloudEyeDome),
+        ToolIcon::Dimension => Some(DomainIcon::DrawingDimension),
+        ToolIcon::Note => Some(DomainIcon::DrawingNote),
         _ => None,
     }
 }
@@ -12251,8 +12253,9 @@ fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
             include_bytes!("../../assets/opencad-icons/measure_distance.svg")
         }
         ToolIcon::MeasureArea => include_bytes!("../../assets/opencad-icons/measure_area.svg"),
-        // So are the two annotation icons.
-        ToolIcon::Note => include_bytes!("../../assets/opencad-icons/annotation_note.svg"),
+        // The line annotation still uses its source form; Note and Dimension
+        // return from the shared domain-icon branch above.
+        ToolIcon::Note => unreachable!("domain icon returns above"),
         ToolIcon::Line => include_bytes!("../../assets/opencad-icons/annotation_line.svg"),
         ToolIcon::Clear => include_bytes!("../../assets/opencad-icons/xclip_remove.svg"),
         ToolIcon::Camera(CameraPreset::Top | CameraPreset::Bottom) => {
@@ -12309,11 +12312,9 @@ fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
         ToolIcon::Sheet => include_bytes!("../../assets/opencad-icons/browser_sheet.svg"),
         ToolIcon::Locked => include_bytes!("../../assets/opencad-icons/browser_locked.svg"),
         ToolIcon::Unlocked => include_bytes!("../../assets/opencad-icons/browser_unlocked.svg"),
-        // The annotations of drawings are drawn like those of the views.
+        // The remaining drawing annotations are drawn like those of the views.
         ToolIcon::Text => include_bytes!("../../assets/opencad-icons/annotation_text.svg"),
-        ToolIcon::Dimension => {
-            include_bytes!("../../assets/opencad-icons/annotation_dimension.svg")
-        }
+        ToolIcon::Dimension => unreachable!("domain icon returns above"),
         ToolIcon::Leader => include_bytes!("../../assets/opencad-icons/annotation_leader.svg"),
     };
     svg(svg::Handle::from_memory(bytes))

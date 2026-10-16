@@ -17,6 +17,16 @@ use crate::{
     VERSION_LABEL,
 };
 
+#[test]
+fn drawing_annotations_use_shared_domain_icons() {
+    use openaec_ui::icons::DomainIcon;
+    assert_eq!(crate::domain_icon(crate::ToolIcon::Note), Some(DomainIcon::DrawingNote));
+    assert_eq!(crate::domain_icon(crate::ToolIcon::Dimension), Some(DomainIcon::DrawingDimension));
+    for icon in [DomainIcon::DrawingNote, DomainIcon::DrawingDimension] {
+        assert_ne!(icon.bytes(16), icon.bytes(24), "small form is reviewed separately");
+    }
+}
+
 fn send(studio: &mut Studio, command: ApiCommand) -> Value {
     let (reply, receive) = std::sync::mpsc::channel();
     let _ = studio.handle_api(ApiRequest { command, reply });
