@@ -11065,19 +11065,18 @@ impl Studio {
             .width(102)
             .height(26)
             .padding([3, 10]);
-            let controls = if self.view_controls_open {
-                Some(self.view_controls_panel())
-            } else {
-                None
-            };
-            let mut items = column![
+            let anchor = container(toggle).width(315).align_x(iced::Alignment::End);
+            let controls = openaec_ui::widgets::popover_aligned(
+                anchor.into(),
+                self.view_controls_panel(),
+                self.view_controls_open,
+                Message::ToggleViewControls,
+                true,
+            );
+            let items = column![
                 iced::widget::Space::with_height(151),
-                container(toggle).width(315).align_x(iced::Alignment::End)
-            ]
-            .spacing(2);
-            if let Some(controls) = controls {
-                items = items.push(controls);
-            }
+                controls,
+            ];
             canvas.push(
                 container(items)
                     .width(Fill)

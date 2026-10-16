@@ -177,6 +177,60 @@ fn loaded_geometry_bounds_use_the_shared_property_grid() {
 }
 
 #[test]
+fn display_popup_is_anchored_without_reflowing_the_viewport() {
+    let mut studio = Studio::default();
+    for theme in [UiTheme::Light, UiTheme::Forge] {
+        studio.ui_theme = theme;
+        let closed = crate::test_render::render_window(&studio, iced::Size::new(1280.0, 760.0));
+        studio.view_controls_open = true;
+        let open = crate::test_render::render_window(&studio, iced::Size::new(1280.0, 760.0));
+        assert_ne!(open.rgb(710, 390), closed.rgb(710, 390), "{} popup surface", theme.key());
+        assert_eq!(open.rgb(690, 390), closed.rgb(690, 390), "{} left viewport", theme.key());
+        assert_eq!(open.rgb(1018, 390), closed.rgb(1018, 390), "{} right viewport", theme.key());
+        studio.view_controls_open = false;
+    }
+}
+
+#[test]
+fn display_popup_closes_when_clicking_outside() {
+    use iced::advanced::{layout, widget::Tree, Layout, Shell};
+    use iced::{mouse, Size, Vector};
+
+    crate::test_render::load_fonts();
+    let mut studio = Studio::default();
+    studio.view_controls_open = true;
+    let mut element = studio.view();
+    let renderer = iced::Renderer::Secondary(iced_tiny_skia::Renderer::new(
+        crate::fonts::REGULAR,
+        iced::Pixels(12.0),
+    ));
+    let mut tree = Tree::new(&element);
+    let size = Size::new(1280.0, 760.0);
+    let node = element.as_widget().layout(
+        &mut tree,
+        &renderer,
+        &layout::Limits::new(Size::ZERO, size),
+    );
+    let mut overlay = element
+        .as_widget_mut()
+        .overlay(&mut tree, Layout::new(&node), &renderer, Vector::ZERO)
+        .expect("open display overlay");
+    let popup_node = overlay.layout(&renderer, size);
+    let mut clipboard = iced::advanced::clipboard::Null;
+    let mut messages = Vec::new();
+    let mut shell = Shell::new(&mut messages);
+    overlay.on_event(
+        iced::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)),
+        Layout::new(&popup_node),
+        mouse::Cursor::Available(iced::Point::new(680.0, 390.0)),
+        &renderer,
+        &mut clipboard,
+        &mut shell,
+    );
+    assert!(messages.iter().any(|message| matches!(message, Message::ToggleViewControls)));
+}
+
+#[test]
 #[ignore = "regenerate native review images on demand"]
 fn export_harmonized_shell_previews() {
     let folder = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../design");
@@ -204,6 +258,20 @@ fn export_harmonized_shell_previews() {
         extensions.ui_theme = theme;
         crate::test_render::render_window(&extensions, iced::Size::new(1280.0, 760.0))
             .save_png(&folder.join(format!("pointcloud-extensions-{name}.png")));
+    }
+}
+
+#[test]
+#[ignore = "regenerate the anchored display popup review on demand"]
+fn export_display_popover_review() {
+    let folder = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../design");
+    std::fs::create_dir_all(&folder).unwrap();
+    let mut studio = Studio::default();
+    studio.view_controls_open = true;
+    for (theme, name) in [(UiTheme::Light, "light"), (UiTheme::Forge, "forge")] {
+        studio.ui_theme = theme;
+        crate::test_render::render_window(&studio, iced::Size::new(1280.0, 760.0))
+            .save_png(&folder.join(format!("pointcloud-display-{name}.png")));
     }
 }
 
