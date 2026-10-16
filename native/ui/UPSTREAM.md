@@ -92,3 +92,5 @@ simplified 16 px vectors. The package now exposes 33 `DomainIcon` variants;
 Pointcloud keeps its own commands and does not invoke these PDF-only meanings.
 The original PDF Studio JavaScript application has not been migrated to the
 shared crate. The Style Repo keeps the source mapping and native comparison.
+
+The sidebar-first frame API is synchronized with the Style Repo: `SidebarFrameProfile::WORKSPACE_COMPOSER` preserves the 32/220/22 px source geometry, and `ChromeMode::SidebarCompact` exposes a raw navigation slot without a ribbon or document band. Pointcloud continues to use its existing ribbon shell; the new variant is available to future sidebar-first OpenAEC tools. The native Pointcloud desktop package still passes `cargo check` with this shared API.
