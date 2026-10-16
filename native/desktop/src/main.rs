@@ -12208,6 +12208,8 @@ fn domain_icon(icon: ToolIcon) -> Option<openaec_ui::icons::DomainIcon> {
         ToolIcon::Shading => Some(DomainIcon::PointcloudEyeDome),
         ToolIcon::Dimension => Some(DomainIcon::DrawingDimension),
         ToolIcon::Note => Some(DomainIcon::DrawingNote),
+        ToolIcon::Move => Some(DomainIcon::TransformMove),
+        ToolIcon::Line => Some(DomainIcon::DrawingLine),
         _ => None,
     }
 }
@@ -12253,10 +12255,9 @@ fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
             include_bytes!("../../assets/opencad-icons/measure_distance.svg")
         }
         ToolIcon::MeasureArea => include_bytes!("../../assets/opencad-icons/measure_area.svg"),
-        // The line annotation still uses its source form; Note and Dimension
-        // return from the shared domain-icon branch above.
+        // The drawing annotations return from the shared domain-icon branch.
         ToolIcon::Note => unreachable!("domain icon returns above"),
-        ToolIcon::Line => include_bytes!("../../assets/opencad-icons/annotation_line.svg"),
+        ToolIcon::Line => unreachable!("domain icon returns above"),
         ToolIcon::Clear => include_bytes!("../../assets/opencad-icons/xclip_remove.svg"),
         ToolIcon::Camera(CameraPreset::Top | CameraPreset::Bottom) => {
             include_bytes!("../../assets/opencad-icons/view_top.svg")
@@ -12270,7 +12271,7 @@ fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
         ToolIcon::Camera(CameraPreset::Isometric) => {
             include_bytes!("../../assets/opencad-icons/view_iso.svg")
         }
-        ToolIcon::Move => include_bytes!("../../assets/opencad-icons/move.svg"),
+        ToolIcon::Move => unreachable!("domain icon returns above"),
         ToolIcon::Scale => include_bytes!("../../assets/opencad-icons/scale.svg"),
         ToolIcon::Decimate => include_bytes!("../../assets/opencad-icons/point.svg"),
         ToolIcon::Mesh => include_bytes!("../../assets/opencad-icons/region.svg"),

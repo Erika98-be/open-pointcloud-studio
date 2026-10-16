@@ -18,11 +18,13 @@ use crate::{
 };
 
 #[test]
-fn drawing_annotations_use_shared_domain_icons() {
+fn drawing_and_transform_tools_use_shared_domain_icons() {
     use openaec_ui::icons::DomainIcon;
     assert_eq!(crate::domain_icon(crate::ToolIcon::Note), Some(DomainIcon::DrawingNote));
     assert_eq!(crate::domain_icon(crate::ToolIcon::Dimension), Some(DomainIcon::DrawingDimension));
-    for icon in [DomainIcon::DrawingNote, DomainIcon::DrawingDimension] {
+    assert_eq!(crate::domain_icon(crate::ToolIcon::Move), Some(DomainIcon::TransformMove));
+    assert_eq!(crate::domain_icon(crate::ToolIcon::Line), Some(DomainIcon::DrawingLine));
+    for icon in [DomainIcon::DrawingNote, DomainIcon::DrawingDimension, DomainIcon::TransformMove, DomainIcon::DrawingLine] {
         assert_ne!(icon.bytes(16), icon.bytes(24), "small form is reviewed separately");
     }
 }
