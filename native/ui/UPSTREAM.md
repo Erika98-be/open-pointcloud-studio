@@ -12,7 +12,10 @@ drawings, sheets, result categories, shadows, and tooltips. The domain ribbon
 and panels remain in the application while they are migrated to the shared
 shell. Keep the source snapshot and license in sync when updating it.
 The snapshot includes the crate's font license texts and the Apache-2.0
-notice for the source-reviewed Speech microphone icon; the Style Repo's
+notice for the source-reviewed Speech microphone icon. It also carries the
+32 source-reviewed Tauri Style Book `RibbonIcon` vectors as a typed API;
+Pointcloud does not yet call those template-specific commands. Their CC BY-SA
+provenance is recorded in `NOTICE.md`. The Style Repo's
 `scripts/check_portable_ui.py` verifies these files alongside code and assets.
 
 The desktop now uses the source Tauri shell heights from `openaec_ui::model::metrics`:
