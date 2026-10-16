@@ -312,6 +312,34 @@ fn export_file_task_pages_review() {
 }
 
 #[test]
+#[ignore = "regenerate minimum-size File view on demand"]
+fn export_file_minimum_window_review() {
+    let folder = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../design");
+    std::fs::create_dir_all(&folder).unwrap();
+    let mut studio = Studio::default();
+    studio.file_open = true;
+    studio.file_page = crate::file_view::FilePage::Open;
+    for (theme, name) in [(UiTheme::Light, "light"), (UiTheme::Forge, "forge")] {
+        studio.ui_theme = theme;
+        crate::test_render::render_window(&studio, iced::Size::new(720.0, 480.0))
+            .save_png(&folder.join(format!("pointcloud-file-small-{name}.png")));
+    }
+}
+
+#[test]
+fn file_view_keeps_selected_page_and_footer_at_minimum_window() {
+    let mut studio = Studio::default();
+    studio.file_open = true;
+    studio.file_page = crate::file_view::FilePage::Open;
+    for theme in [UiTheme::Light, UiTheme::Forge] {
+        studio.ui_theme = theme;
+        let picture = crate::test_render::render_window(&studio, iced::Size::new(720.0, 480.0));
+        assert!(picture.is(1, 134, theme.colors().accent), "{} selected Open page", theme.key());
+        assert_ne!(picture.rgb(20, 435), picture.rgb(300, 435), "{} footer visible", theme.key());
+    }
+}
+
+#[test]
 #[ignore = "regenerate settings dialog review images on demand"]
 fn export_shared_settings_review() {
     let _language = TestLanguage::hold(Language::English);
