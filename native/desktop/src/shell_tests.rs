@@ -156,6 +156,27 @@ fn shared_property_rows_keep_a_28_pixel_rhythm_in_both_themes() {
 }
 
 #[test]
+fn loaded_geometry_bounds_use_the_shared_property_grid() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("bounds.xyz");
+    std::fs::write(&path, "0 0 0\n4 0 0\n4 3 0\n0 3 2\n").unwrap();
+    let cloud = Arc::new(pointcloud_core::open(&path, 10).unwrap());
+    let mut studio = Studio::default();
+    let _ = studio.update(Message::Loaded(Ok(cloud)));
+    for theme in [UiTheme::Light, UiTheme::Forge] {
+        studio.ui_theme = theme;
+        let picture = crate::test_render::render_window(&studio, iced::Size::new(1280.0, 760.0));
+        let rule = picture.rgb(1100, 605);
+        assert_eq!(picture.rgb(1100, 633), rule, "{} Y row", theme.key());
+        assert_eq!(picture.rgb(1100, 661), rule, "{} Z row", theme.key());
+        assert_ne!(picture.rgb(1100, 604), rule, "{} one-pixel rule", theme.key());
+        // The old CAD control drew full borders around each row. The shared
+        // grid has only the horizontal rule, leaving the label column open.
+        assert_eq!(picture.rgb(1070, 590), picture.rgb(1100, 590), "{} no inner box", theme.key());
+    }
+}
+
+#[test]
 #[ignore = "regenerate native review images on demand"]
 fn export_harmonized_shell_previews() {
     let folder = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../design");

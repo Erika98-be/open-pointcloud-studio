@@ -4,14 +4,11 @@
 // iced 0.13 palette API.
 
 use iced::widget::{container, row, text};
-use iced::{Border, Element, Fill, Length, Theme};
+use iced::{Border, Element, Length};
 
 use crate::ui_style;
 use crate::ui_theme;
 use crate::Message;
-
-const ROW_H: f32 = 28.0;
-const FONT_SZ: f32 = 12.0;
 
 /// Shared property-grid row with Pointcloud's translated field label.
 pub fn property_row(label: &'static str, value: String) -> Element<'static, Message> {
@@ -20,48 +17,24 @@ pub fn property_row(label: &'static str, value: String) -> Element<'static, Mess
     )
 }
 
-/// Keep survey bounds readable within OpenCADStudio's narrow properties dock.
+/// Survey bounds use the same label column and 28 px rhythm as every property.
 pub fn bounds_row(axis: &'static str, min: f64, max: f64) -> Element<'static, Message> {
-    let axis = container(text(axis).size(FONT_SZ).style(|theme| text::Style {
-        color: Some(ui_theme::colors(theme).text_secondary),
-    }))
-    .width(Length::Fixed(30.0))
-    .height(ROW_H)
-    .align_y(iced::Alignment::Center)
-    .padding([0, 8]);
-    let values = container(
-        row![
-            text(format!("{min:.3}"))
-                .size(FONT_SZ)
-                .width(Length::FillPortion(1)),
-            text("→")
-                .size(FONT_SZ)
-                .style(|theme| text::Style {
-                    color: Some(ui_theme::colors(theme).text_secondary),
-                })
-                .width(Length::Fixed(22.0)),
-            text(format!("{max:.3}"))
-                .size(FONT_SZ)
-                .width(Length::FillPortion(1)),
-        ]
-        .align_y(iced::Alignment::Center),
-    )
-    .width(Fill)
-    .height(ROW_H)
-    .align_y(iced::Alignment::Center)
-    .padding([0, 6]);
-    container(row![axis, values])
-        .height(ROW_H)
-        .width(Fill)
-        .style(|theme: &Theme| container::Style {
-            border: Border {
-                color: ui_theme::colors(theme).border_subtle,
-                width: 1.0,
-                radius: 0.0.into(),
-            },
-            ..Default::default()
-        })
-        .into()
+    let values = row![
+        text(format!("{min:.3}"))
+            .size(12)
+            .width(Length::FillPortion(1)),
+        text("→")
+            .size(12)
+            .style(|theme| text::Style {
+                color: Some(ui_theme::colors(theme).text_secondary),
+            })
+            .width(Length::Fixed(22.0)),
+        text(format!("{max:.3}"))
+            .size(12)
+            .width(Length::FillPortion(1)),
+    ]
+    .align_y(iced::Alignment::Center);
+    openaec_ui::widgets::property_grid_control_with(axis, values.into(), ui_theme::shared_theme)
 }
 
 /// Editable property field in the shared grid.
