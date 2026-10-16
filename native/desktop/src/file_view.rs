@@ -125,8 +125,6 @@ pub enum FileAction {
     MeshToPlans,
 }
 
-/// The height of a menu row that leads to a page.
-const PAGE_ROW_H: f32 = 40.0;
 /// The widest a column of tiles grows on a wide window.
 const TILE_COLUMN_W: f32 = 620.0;
 
@@ -244,88 +242,32 @@ impl Studio {
     /// is open and what the application is, then the entries every OpenAEC
     /// application has.
     fn file_menu(&self) -> Element<'_, Message> {
-        let rule = || {
-            container(Space::new(Fill, 1)).style(|theme| {
-                container::Style::default().background(ui_theme::colors(theme).border_subtle)
-            })
-        };
-        let item = |label: &'static str, message: Message| {
-            button(text(tr(label)).size(14))
-                .on_press(message)
-                .style(|theme, status| ui_style::ribbon_button(theme, false, status))
-                .width(Fill)
-                .padding([11, 18])
-        };
-        // The open page carries the accent bar of the style book at its left.
-        let page = |page: FilePage| {
-            let open = self.file_page == page;
-            row![
-                container(Space::new(3, Fill)).style(move |theme| {
-                    let colors = ui_theme::colors(theme);
-                    container::Style::default().background(if open {
-                        colors.accent
-                    } else {
-                        iced::Color::TRANSPARENT
-                    })
-                }),
-                button(text(tr(page.label())).size(14))
-                    .on_press(Message::FilePage(page))
-                    .style(move |theme, status| ui_style::ribbon_button(theme, open, status))
-                    .width(Fill)
-                    .height(Fill)
-                    .padding([11, 15]),
-            ]
-            .height(PAGE_ROW_H)
-        };
+        use openaec_ui::widgets::{BackstageFooter, BackstagePage};
         let pages = |task: bool| {
             FilePage::ALL
                 .into_iter()
-                .filter(|each| each.is_task() == task)
-                .fold(column![].width(Fill), |pages, each| pages.push(page(each)))
+                .filter(|page| page.is_task() == task)
+                .map(|page| BackstagePage {
+                    label: tr(page.label()).into(),
+                    message: Message::FilePage(page),
+                    active: self.file_page == page,
+                    enabled: true,
+                })
+                .collect()
         };
-        let top = column![
-            Space::new(Fill, 14),
+        openaec_ui::widgets::backstage_nav_with(
             pages(true),
-            container(rule()).padding([10, 0]),
             pages(false),
-        ]
-        .width(Fill);
-        let footer = column![
-            rule(),
-            item(
-                "Settings…",
-                Message::Settings(settings_dialog::SettingsAction::Open),
-            ),
-            button(
-                text(tr("←  Return to model"))
-                    .size(13)
-                    .font(fonts::SEMIBOLD),
-            )
-            .on_press(Message::ToggleFile)
-            .style(|theme, status| ui_style::ribbon_button(theme, false, status))
-            .width(Fill)
-            .padding([13, 18]),
-            // Exit ends the session at once: it stands apart, below the entry
-            // that is used most.
-            rule(),
-            item("Exit", Message::Exit),
-        ]
-        .width(Fill);
-
-        container(column![ui_style::scrollable(top).height(Fill), footer].height(Fill))
-            .width(260)
-            .height(Fill)
-            .style(|theme| {
-                let colors = ui_theme::colors(theme);
-                container::Style::default()
-                    .background(colors.bg_lighter)
-                    .border(iced::Border {
-                        color: colors.border,
-                        width: 1.0,
-                        radius: 0.0.into(),
-                    })
-            })
-            .into()
+            BackstageFooter {
+                settings: (
+                    tr("Settings…").into(),
+                    Message::Settings(settings_dialog::SettingsAction::Open),
+                ),
+                back: (tr("←  Return to model").into(), Message::ToggleFile),
+                exit: (tr("Exit").into(), Message::Exit),
+            },
+            ui_theme::shared_theme,
+        )
     }
 
     /// The title of a page with one line under it that says what it is for.

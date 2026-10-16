@@ -231,6 +231,22 @@ fn display_popup_closes_when_clicking_outside() {
 }
 
 #[test]
+fn shared_backstage_nav_keeps_page_rhythm_and_selected_marker() {
+    let mut studio = Studio::default();
+    studio.file_open = true;
+    studio.file_page = crate::file_view::FilePage::Extensions;
+    for theme in [UiTheme::Light, UiTheme::Forge] {
+        studio.ui_theme = theme;
+        let picture = crate::test_render::render_window(&studio, iced::Size::new(1280.0, 760.0));
+        let accent = theme.colors().accent;
+        assert!(picture.is(1, 315, accent), "{} selected marker", theme.key());
+        assert!(!picture.is(1, 275, accent), "{} row above", theme.key());
+        assert!(!picture.is(1, 355, accent), "{} row below", theme.key());
+        assert_ne!(picture.rgb(259, 315), picture.rgb(260, 315), "{} 260 px edge", theme.key());
+    }
+}
+
+#[test]
 #[ignore = "regenerate native review images on demand"]
 fn export_harmonized_shell_previews() {
     let folder = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../design");

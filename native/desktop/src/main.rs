@@ -11076,7 +11076,8 @@ impl Studio {
             let items = column![
                 iced::widget::Space::with_height(151),
                 controls,
-            ];
+            ]
+            .spacing(2);
             canvas.push(
                 container(items)
                     .width(Fill)
