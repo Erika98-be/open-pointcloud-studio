@@ -4,6 +4,7 @@
 //! `design/ontwerp-0.4/tokens-0.4.json` (version 0.4.0). Do not edit by hand;
 //! change the JSON and run the generator. This module is the start of library 0.4
 //! and is independent of the prototype theme in [`crate::theme`].
+#![allow(clippy::excessive_precision)] // Preserve source RGB and opacity values.
 use iced::{Color, Shadow, Vector};
 use serde::{Deserialize, Serialize};
 

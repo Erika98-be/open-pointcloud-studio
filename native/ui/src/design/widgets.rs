@@ -810,6 +810,7 @@ pub fn toast<'a, M: Clone + 'a>(look: Look, tone: Tone, icon: &'static str, titl
 
 /// A dialog card: 420 px (or 560 px), title in Space Grotesk 16 px with a close
 /// button, content, and buttons at the bottom right. Draw it over [`overlay`].
+#[allow(clippy::too_many_arguments)] // Public layout slots map directly to the reviewed dialog spec.
 pub fn dialog<'a, M: Clone + 'a>(
     look: Look,
     title: &'a str,
