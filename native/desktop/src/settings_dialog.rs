@@ -115,26 +115,38 @@ impl Studio {
                 }
             }
             SettingsAction::ThemeMenu(open) => {
-                if let Some(dialog) = &mut self.settings { dialog.theme_menu_open = open; }
+                if let Some(dialog) = &mut self.settings {
+                    dialog.theme_menu_open = open;
+                }
             }
             SettingsAction::ResetPrompt(open) => {
                 if let Some(dialog) = &mut self.settings {
                     dialog.reset_confirm = open;
-                    if open { dialog.theme_menu_open = false; }
+                    if open {
+                        dialog.theme_menu_open = false;
+                    }
                 }
             }
             SettingsAction::Language(language) => i18n::set(language),
             SettingsAction::Theme(theme) => {
                 self.preview_theme(theme);
-                if let Some(dialog) = &mut self.settings { dialog.theme_menu_open = false; }
+                if let Some(dialog) = &mut self.settings {
+                    dialog.theme_menu_open = false;
+                }
             }
             SettingsAction::Reset => {
-                if self.settings.as_ref().is_some_and(|dialog| dialog.reset_confirm) {
+                if self
+                    .settings
+                    .as_ref()
+                    .is_some_and(|dialog| dialog.reset_confirm)
+                {
                     i18n::set(Language::Auto);
                     self.preview_theme(UiTheme::Light);
                     self.cad_viewer.input.clear();
                     self.cad_viewer.refresh();
-                    if let Some(dialog) = &mut self.settings { dialog.reset_confirm = false; }
+                    if let Some(dialog) = &mut self.settings {
+                        dialog.reset_confirm = false;
+                    }
                 }
             }
             SettingsAction::Save => {
@@ -155,7 +167,11 @@ impl Studio {
                 }
             }
             SettingsAction::Escape => {
-                if self.settings.as_ref().is_some_and(|dialog| dialog.reset_confirm) {
+                if self
+                    .settings
+                    .as_ref()
+                    .is_some_and(|dialog| dialog.reset_confirm)
+                {
                     self.settings_action(SettingsAction::ResetPrompt(false));
                 } else {
                     self.settings_action(SettingsAction::Cancel);
@@ -178,7 +194,10 @@ impl Studio {
         let tab = |label: &'static str, tab: SettingsTab| {
             let active = dialog.tab == tab;
             openaec_ui::widgets::settings_tab(
-                tr(label), active, send(SettingsAction::Tab(tab)), self.ui_theme.shared(),
+                tr(label),
+                active,
+                send(SettingsAction::Tab(tab)),
+                self.ui_theme.shared(),
             )
         };
         let sidebar = column![
@@ -261,18 +280,23 @@ impl Studio {
             self.ui_theme.shared(),
         );
         if dialog.reset_confirm {
-            Some(stack![
-                modal,
-                openaec_ui::widgets::settings_reset_confirmation(
-                    tr("Reset to Defaults"),
-                    tr("Are you sure you want to reset all settings to their default values?"),
-                    tr("Cancel"),
-                    tr("Reset to Defaults"),
-                    send(SettingsAction::ResetPrompt(false)),
-                    send(SettingsAction::Reset),
-                    self.ui_theme.shared(),
-                ),
-            ].width(Fill).height(Fill).into())
+            Some(
+                stack![
+                    modal,
+                    openaec_ui::widgets::settings_reset_confirmation(
+                        tr("Reset to Defaults"),
+                        tr("Are you sure you want to reset all settings to their default values?"),
+                        tr("Cancel"),
+                        tr("Reset to Defaults"),
+                        send(SettingsAction::ResetPrompt(false)),
+                        send(SettingsAction::Reset),
+                        self.ui_theme.shared(),
+                    ),
+                ]
+                .width(Fill)
+                .height(Fill)
+                .into(),
+            )
         } else {
             Some(modal)
         }
@@ -338,7 +362,10 @@ mod tests {
     fn theme_menu_opens_selects_and_closes_without_committing() {
         let mut studio = Studio::default();
         let original = studio.ui_theme;
-        let next = UiTheme::ALL.into_iter().find(|theme| *theme != original).unwrap();
+        let next = UiTheme::ALL
+            .into_iter()
+            .find(|theme| *theme != original)
+            .unwrap();
         studio.settings_action(SettingsAction::Open);
         studio.settings_action(SettingsAction::Tab(SettingsTab::Appearance));
         studio.settings_action(SettingsAction::ThemeMenu(true));
@@ -352,8 +379,10 @@ mod tests {
 
     #[test]
     fn reset_confirmation_stays_above_settings_and_cancel_restores_preview() {
-        let mut studio = Studio::default();
-        studio.ui_theme = UiTheme::Forge;
+        let mut studio = Studio {
+            ui_theme: UiTheme::Forge,
+            ..Studio::default()
+        };
         studio.settings_action(SettingsAction::Open);
         studio.settings_action(SettingsAction::Reset);
         assert_eq!(studio.ui_theme, UiTheme::Forge);

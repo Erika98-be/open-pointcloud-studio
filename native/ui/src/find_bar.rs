@@ -52,6 +52,12 @@ enum FindIcon {
     HighlightAll,
     Close,
 }
+
+#[derive(Clone, Copy)]
+enum FindControlGlyph {
+    Icon(FindIcon),
+    Text(&'static str),
+}
 impl FindIcon {
     fn bytes(self) -> &'static [u8] {
         match self {
@@ -77,8 +83,7 @@ impl FindIcon {
 }
 
 fn control<'a, M: Clone + 'a>(
-    icon: Option<FindIcon>,
-    label: Option<&'static str>,
+    glyph: FindControlGlyph,
     hint: &'static str,
     theme: Theme,
     selected: bool,
@@ -86,10 +91,9 @@ fn control<'a, M: Clone + 'a>(
     message: M,
     width: u16,
 ) -> Element<'a, M> {
-    let child: Element<'a, M> = if let Some(icon) = icon {
-        icon.view(theme, selected).into()
-    } else {
-        text(label.unwrap_or_default()).size(12).into()
+    let child: Element<'a, M> = match glyph {
+        FindControlGlyph::Icon(icon) => icon.view(theme, selected).into(),
+        FindControlGlyph::Text(label) => text(label).size(12).into(),
     };
     widgets::themed_tooltip(
         button(child)
@@ -198,8 +202,7 @@ pub fn view<'a, M: Clone + 'a>(
                 })
         });
     let previous = control(
-        Some(FindIcon::Previous),
-        None,
+        FindControlGlyph::Icon(FindIcon::Previous),
         language.text("Vorige (Shift+Enter)", "Previous (Shift+Enter)"),
         theme,
         false,
@@ -208,8 +211,7 @@ pub fn view<'a, M: Clone + 'a>(
         22,
     );
     let next = control(
-        Some(FindIcon::Next),
-        None,
+        FindControlGlyph::Icon(FindIcon::Next),
         language.text("Volgende (Enter)", "Next (Enter)"),
         theme,
         false,
@@ -218,8 +220,7 @@ pub fn view<'a, M: Clone + 'a>(
         22,
     );
     let case = control(
-        None,
-        Some("Aa"),
+        FindControlGlyph::Text("Aa"),
         language.text("Hoofdlettergevoelig", "Match case"),
         theme,
         state.match_case,
@@ -228,8 +229,7 @@ pub fn view<'a, M: Clone + 'a>(
         24,
     );
     let whole = control(
-        Some(FindIcon::WholeWord),
-        None,
+        FindControlGlyph::Icon(FindIcon::WholeWord),
         language.text("Hele woorden", "Whole words"),
         theme,
         state.whole_word,
@@ -238,8 +238,7 @@ pub fn view<'a, M: Clone + 'a>(
         24,
     );
     let highlight = control(
-        Some(FindIcon::HighlightAll),
-        None,
+        FindControlGlyph::Icon(FindIcon::HighlightAll),
         language.text("Alles markeren", "Highlight all"),
         theme,
         state.highlight_all,
@@ -248,8 +247,7 @@ pub fn view<'a, M: Clone + 'a>(
         24,
     );
     let close = control(
-        Some(FindIcon::Close),
-        None,
+        FindControlGlyph::Icon(FindIcon::Close),
         language.text("Sluiten (Esc)", "Close (Esc)"),
         theme,
         false,

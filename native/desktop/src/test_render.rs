@@ -25,7 +25,7 @@ impl Picture {
     pub(crate) fn save_png(&self, path: &std::path::Path) {
         let size = tiny_skia::IntSize::from_wh(self.width, self.height).expect("valid image size");
         let mut rgba = self.bytes.clone();
-        for pixel in rgba.chunks_exact_mut(4) {
+        for pixel in rgba.as_chunks_mut::<4>().0 {
             pixel.swap(0, 2); // iced_tiny_skia gives BGRA; PNG encoding expects RGBA.
         }
         tiny_skia::Pixmap::from_vec(rgba, size)
@@ -103,14 +103,18 @@ pub(crate) fn render_under(
         cursor,
         &Rectangle::with_size(size),
     );
-    if let Some(mut overlay) = element.as_widget_mut().overlay(
-        &mut tree, Layout::new(&node), &renderer, Vector::ZERO,
-    ) {
+    if let Some(mut overlay) =
+        element
+            .as_widget_mut()
+            .overlay(&mut tree, Layout::new(&node), &renderer, Vector::ZERO)
+    {
         let popup_node = overlay.layout(&renderer, size);
         overlay.draw(
             &mut renderer,
             theme,
-            &renderer::Style { text_color: theme.palette().text },
+            &renderer::Style {
+                text_color: theme.palette().text,
+            },
             Layout::new(&popup_node),
             cursor,
         );

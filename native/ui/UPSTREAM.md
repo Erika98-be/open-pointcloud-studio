@@ -7,6 +7,12 @@ so a public checkout builds without private GitHub access or another directory
 on the developer's machine. Run `python3 scripts/check_portable_ui.py` in the
 Style Repo before updating this snapshot.
 
+This snapshot includes the 0.4 design module (`src/design/`) and the canonical
+crate license bundle. The parity check compares all 22 Rust source files,
+including nested modules, plus the packaged assets and license texts. The
+existing Pointcloud window still uses its integrated shell components; the 0.4
+module is available for gradual adoption by this and other tools.
+
 The integration uses its canonical semantic icons for titlebar commands,
 its bundled Inter and Space Grotesk fonts, 77 common color-token fields in
 each of the five themes, and the shared ribbon-button state styling. Pointcloud keeps local colors for its 3D scene,

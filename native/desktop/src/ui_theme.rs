@@ -91,8 +91,7 @@ impl UiTheme {
         }
     }
 
-    /// The four colours the theme choice of the template shows before the
-    /// name of a theme (`THEME_OPTIONS` in `SettingsDialog.tsx`).
+    #[cfg(test)]
     pub fn swatches(self) -> [Color; 4] {
         self.shared().swatches()
     }
@@ -1433,9 +1432,14 @@ mod tests {
     }
 
     fn color_close(left: Color, right: Color) -> bool {
-        [left.r - right.r, left.g - right.g, left.b - right.b, left.a - right.a]
-            .into_iter()
-            .all(|difference| difference.abs() < 0.000001)
+        [
+            left.r - right.r,
+            left.g - right.g,
+            left.b - right.b,
+            left.a - right.a,
+        ]
+        .into_iter()
+        .all(|difference| difference.abs() < 0.000001)
     }
 
     fn token_close(left: &Token, right: &Token) -> bool {
@@ -1704,8 +1708,12 @@ mod tests {
     #[test]
     fn shared_modal_shadow_matches_the_pinned_pointcloud_tokens() {
         for theme in UiTheme::ALL {
-            assert_eq!(theme.shared().dialog_shadow(), theme.colors().dialog_shadow,
-                "{} modal shadow", theme.key());
+            assert_eq!(
+                theme.shared().dialog_shadow(),
+                theme.colors().dialog_shadow,
+                "{} modal shadow",
+                theme.key()
+            );
         }
     }
 }

@@ -10076,7 +10076,11 @@ impl Studio {
 
     fn ribbon_sections(
         &self,
-    ) -> (Element<'_, Message>, Element<'_, Message>, Option<Element<'_, Message>>) {
+    ) -> (
+        Element<'_, Message>,
+        Element<'_, Message>,
+        Option<Element<'_, Message>>,
+    ) {
         let active_tab = self.ribbon_tab;
         let compact = self.window_size.is_some_and(|size| size.width < 930.0);
         let file_button = openaec_ui::widgets::ribbon_tab(
@@ -10179,14 +10183,17 @@ impl Studio {
         )
         .width(Fill)
         .height(openaec_ui::model::metrics::TITLE)
-        .style(|theme| container::Style::default()
-            .background(ui_theme::colors(theme).bg_lighter)
-            .color(ui_theme::colors(theme).text));
+        .style(|theme| {
+            container::Style::default()
+                .background(ui_theme::colors(theme).bg_lighter)
+                .color(ui_theme::colors(theme).text)
+        });
         let tab_strip = openaec_ui::widgets::ribbon_tab_strip(
-            row![file_button, tabs].spacing(2).into(), self.ui_theme.shared(),
+            row![file_button, tabs].spacing(2).into(),
+            self.ui_theme.shared(),
         );
         if self.file_open {
-            return (title_strip.into(), tab_strip.into(), None);
+            return (title_strip.into(), tab_strip, None);
         }
 
         let open = self.ribbon_panel_open;
@@ -10198,7 +10205,7 @@ impl Studio {
                 .height(opencad_ribbon::TOOL_BAR_H)
                 .style(ribbon_style)
                 .into();
-        (title_strip.into(), tab_strip.into(), Some(tool_strip))
+        (title_strip.into(), tab_strip, Some(tool_strip))
     }
 
     #[cfg(test)]
@@ -11078,11 +11085,7 @@ impl Studio {
                 Message::ToggleViewControls,
                 true,
             );
-            let items = column![
-                iced::widget::Space::with_height(151),
-                controls,
-            ]
-            .spacing(2);
+            let items = column![iced::widget::Space::with_height(151), controls,].spacing(2);
             canvas.push(
                 container(items)
                     .width(Fill)
@@ -12241,10 +12244,20 @@ fn icon_svg(icon: ToolIcon, size: f32) -> Element<'static, Message> {
             .into();
     }
     let bytes: &'static [u8] = match icon {
-        ToolIcon::Open | ToolIcon::Export | ToolIcon::Fit | ToolIcon::FitSelection
-        | ToolIcon::ZoomIn | ToolIcon::ZoomOut | ToolIcon::Pan | ToolIcon::Undo
-        | ToolIcon::Redo | ToolIcon::Save | ToolIcon::Duplicate | ToolIcon::Rename
-        | ToolIcon::ChevronOpen | ToolIcon::ChevronClosed => {
+        ToolIcon::Open
+        | ToolIcon::Export
+        | ToolIcon::Fit
+        | ToolIcon::FitSelection
+        | ToolIcon::ZoomIn
+        | ToolIcon::ZoomOut
+        | ToolIcon::Pan
+        | ToolIcon::Undo
+        | ToolIcon::Redo
+        | ToolIcon::Save
+        | ToolIcon::Duplicate
+        | ToolIcon::Rename
+        | ToolIcon::ChevronOpen
+        | ToolIcon::ChevronClosed => {
             unreachable!("canonical icons return above")
         }
         // The scan-folder and section-box icons are drawn for this app in the

@@ -16,16 +16,17 @@ use iced::advanced::overlay;
 use iced::advanced::renderer;
 use iced::advanced::widget::{tree, Operation, Tree, Widget};
 use iced::advanced::{Clipboard, Shell};
+#[cfg(test)]
+use iced::widget::container;
 use iced::widget::{
-    button, checkbox as check_box, container, pick_list as choice, progress_bar as progress,
+    button, checkbox as check_box, pick_list as choice, progress_bar as progress,
     scrollable as scrolling, slider as slide, text, text_input as field, tooltip as tip_widget,
-};
-use iced::{
-    event, mouse, Color, Element, Event, Length, Point, Rectangle, Renderer, Size,
-    Theme, Vector,
 };
 #[cfg(test)]
 use iced::Background;
+use iced::{
+    event, mouse, Color, Element, Event, Length, Point, Rectangle, Renderer, Size, Theme, Vector,
+};
 
 use crate::ui_theme::{self, UiColors};
 use crate::Message;
@@ -219,7 +220,7 @@ pub fn scrollable<'a>(
         .style(scroll)
 }
 
-/// The space between a tooltip and what it explains.
+#[cfg(test)]
 const TIP_GAP: f32 = 8.0;
 
 /// `content` with `tip_text` in a tooltip above it, where the style book
@@ -228,8 +229,12 @@ pub fn tooltip<'a>(
     content: impl Into<Element<'a, Message>>,
     tip_text: impl text::IntoFragment<'a>,
 ) -> tip_widget::Tooltip<'a, Message> {
-    openaec_ui::widgets::themed_tooltip(content, tip_text, tip_widget::Position::Top,
-        openaec_ui::Theme::Light)
+    openaec_ui::widgets::themed_tooltip(
+        content,
+        tip_text,
+        tip_widget::Position::Top,
+        openaec_ui::Theme::Light,
+    )
 }
 
 /// `content` of the ribbon or the top strip with `tip_text` in a tooltip
@@ -239,8 +244,12 @@ pub fn ribbon_tooltip<'a>(
     content: impl Into<Element<'a, Message>>,
     tip_text: impl text::IntoFragment<'a>,
 ) -> tip_widget::Tooltip<'a, Message> {
-    openaec_ui::widgets::themed_tooltip(content, tip_text, tip_widget::Position::Bottom,
-        openaec_ui::Theme::Light)
+    openaec_ui::widgets::themed_tooltip(
+        content,
+        tip_text,
+        tip_widget::Position::Bottom,
+        openaec_ui::Theme::Light,
+    )
 }
 
 /// A wide row with `tip_text` in a tooltip above the pointer, for a tip
@@ -250,8 +259,13 @@ pub fn pointer_tooltip<'a>(
     content: impl Into<Element<'a, Message>>,
     tip_text: impl text::IntoFragment<'a>,
 ) -> tip_widget::Tooltip<'a, Message> {
-    openaec_ui::widgets::themed_tooltip(content, tip_text, tip_widget::Position::FollowCursor,
-        openaec_ui::Theme::Light).gap(0.0)
+    openaec_ui::widgets::themed_tooltip(
+        content,
+        tip_text,
+        tip_widget::Position::FollowCursor,
+        openaec_ui::Theme::Light,
+    )
+    .gap(0.0)
 }
 
 /// `content` with `tint` of the theme laid over it while the pointer is

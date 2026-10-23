@@ -138,9 +138,7 @@ pub fn shell<'a, M: Clone + 'a>(state: &'a ShellState, slots: Slots<'a,M>) -> El
             widgets::backstage_nav_with(pages, Vec::new(), footer, move |_| theme),
             (slots.content)(Region::Workspace),
         ].height(Fill).width(Fill).into()
-    } else if matches!(slots.mode, ChromeMode::TopNav | ChromeMode::Plain) {
-        (slots.content)(Region::Workspace)
-    } else if slots.mode == ChromeMode::RibbonWorkspace {
+    } else if matches!(slots.mode, ChromeMode::TopNav | ChromeMode::Plain | ChromeMode::RibbonWorkspace) {
         (slots.content)(Region::Workspace)
     } else if slots.mode == ChromeMode::RibbonSidebar {
         row![
@@ -193,8 +191,8 @@ pub fn shell<'a, M: Clone + 'a>(state: &'a ShellState, slots: Slots<'a,M>) -> El
     );
     let bands = if state.backstage {
         crate::frame::frame(crate::frame::FrameSlots {
-            titlebar: titlebar.into(), tabs: tabs.into(), ribbon: None,
-            documents: None, content: body, status: status.into(),
+            titlebar: titlebar.into(), tabs, ribbon: None,
+            documents: None, content: body, status,
         })
     } else if slots.mode == ChromeMode::SidebarCompact {
         crate::frame::sidebar_frame(
@@ -202,25 +200,25 @@ pub fn shell<'a, M: Clone + 'a>(state: &'a ShellState, slots: Slots<'a,M>) -> El
             titlebar.into(),
             compact_sidebar.expect("compact sidebar"),
             body,
-            status.into(),
+            status,
         )
     } else if slots.mode == ChromeMode::Plain {
-        crate::frame::workflow_frame(titlebar.into(), None, body, status.into())
+        crate::frame::workflow_frame(titlebar.into(), None, body, status)
     } else if slots.mode == ChromeMode::TopNav {
         crate::frame::frame(crate::frame::FrameSlots {
-            titlebar: titlebar.into(), tabs: tabs.into(), ribbon: None,
-            documents: None, content: body, status: status.into(),
+            titlebar: titlebar.into(), tabs, ribbon: None,
+            documents: None, content: body, status,
         })
     } else if matches!(slots.mode, ChromeMode::Workflow | ChromeMode::Sidebar) {
-        crate::frame::workflow_frame(titlebar.into(), (slots.mode == ChromeMode::Workflow).then_some(document_bar.into()), body, status.into())
+        crate::frame::workflow_frame(titlebar.into(), (slots.mode == ChromeMode::Workflow).then_some(document_bar), body, status)
     } else {
         crate::frame::frame(crate::frame::FrameSlots {
             titlebar: titlebar.into(),
-            tabs: tabs.into(),
+            tabs,
             ribbon: Some(ribbon.into()),
-            documents: Some(document_bar.into()),
+            documents: Some(document_bar),
             content: body,
-            status: status.into(),
+            status,
         })
     };
     let base: Element<'a,Message<M>>=container(bands).height(Fill).width(Fill).style(move |_| widgets::surface(theme)).into();

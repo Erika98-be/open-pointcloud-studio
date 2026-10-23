@@ -21,8 +21,8 @@ use crate::view_tabs::shortened;
 use crate::{app_title, fonts, format_count, format_zoom_level, ui_style, ui_theme};
 use crate::{CloudEntry, Message, Studio};
 
-/// The height of the bar, its line along the top included.
-pub(crate) const HEIGHT: f32 = openaec_ui::model::metrics::STATUS as f32;
+#[cfg(test)]
+const HEIGHT: f32 = openaec_ui::model::metrics::STATUS as f32;
 
 /// The most characters the name of a drawing or a sheet takes at the right.
 const SHOWN_CHARS: usize = 40;
